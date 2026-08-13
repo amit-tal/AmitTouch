@@ -12,10 +12,10 @@
   "dir": "rtl",
   "icons": [
     {
-      "src": "/assets/amit-touch-logo.png",
+      "src": "/assets/amit-touch-logo.svg",
       "sizes": "any",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }
