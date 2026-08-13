@@ -24,6 +24,13 @@
     };
   }
 
+  function statusLabel(status) {
+    if (status === 'pending') return 'ממתין לאישור';
+    if (status === 'confirmed') return 'מאושר';
+    if (status === 'cancelled') return 'בוטל';
+    return status || '';
+  }
+
   async function loadAppointments() {
     if (!user || !user.id || user.admin) return [];
     const response = await fetch('/api/customers/' + encodeURIComponent(user.id) + '/appointments');
@@ -37,15 +44,9 @@
     const fullName = document.getElementById('loginName').value.replace(/\s+/g, ' ').trim();
     const phone = cleanPhoneValue(document.getElementById('loginPhone').value);
     if (!fullName || phone.length < 9) return alert('יש למלא שם מלא ומספר נייד');
-
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, phone })
-      });
+      const response = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName, phone }) });
       const data = await response.json();
-
       if (response.status === 404) {
         const parts = fullName.split(' ');
         document.getElementById('regFirst').value = parts.shift() || '';
@@ -56,7 +57,6 @@
       }
       if (response.status === 401) return alert('השם ומספר הטלפון לא תואמים לחשבון הרשום');
       if (!response.ok) throw new Error(data.error || 'LOGIN_FAILED');
-
       if (data.role === 'admin') {
         user = { name: fullName, phone, admin: true };
         document.getElementById('nav').classList.remove('show');
@@ -64,15 +64,7 @@
         await window.renderAdmin();
         return;
       }
-
-      user = {
-        id: data.customer.id,
-        name: data.customer.fullName,
-        firstName: data.customer.firstName,
-        lastName: data.customer.lastName,
-        phone: data.customer.phone,
-        dob: data.customer.birthDate
-      };
+      user = { id: data.customer.id, name: data.customer.fullName, firstName: data.customer.firstName, lastName: data.customer.lastName, phone: data.customer.phone, dob: data.customer.birthDate };
       await loadAppointments();
       window.enterApp();
     } catch (error) {
@@ -87,13 +79,8 @@
     const phone = cleanPhoneValue(document.getElementById('regPhone').value);
     const birthDate = document.getElementById('regDob').value || null;
     if (!firstName || !lastName || phone.length < 9) return alert('יש למלא שם פרטי, שם משפחה ומספר נייד');
-
     try {
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, phone, birthDate })
-      });
+      const response = await fetch('/api/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ firstName, lastName, phone, birthDate }) });
       const data = await response.json();
       if (response.status === 409) {
         document.getElementById('loginName').value = `${firstName} ${lastName}`;
@@ -102,15 +89,7 @@
         return alert('המספר הזה כבר רשום. עברתי למסך ההתחברות.');
       }
       if (!response.ok) throw new Error(data.error || 'REGISTRATION_FAILED');
-
-      user = {
-        id: data.customer.id,
-        name: data.customer.fullName,
-        firstName: data.customer.firstName,
-        lastName: data.customer.lastName,
-        phone: data.customer.phone,
-        dob: data.customer.birthDate
-      };
+      user = { id: data.customer.id, name: data.customer.fullName, firstName: data.customer.firstName, lastName: data.customer.lastName, phone: data.customer.phone, dob: data.customer.birthDate };
       appointments = [];
       window.enterApp();
     } catch (error) {
@@ -129,42 +108,25 @@
   window.confirmBook = async function () {
     if (!booking.time) return alert('בחרי שעה');
     if (!user || !user.id) return alert('יש להתחבר מחדש לפני קביעת תור');
-
     const extra = booking.extra || { n: '', p: 0, m: 0 };
-    const payload = {
-      customerId: user.id,
-      serviceCode: booking.service.id,
-      service: booking.service.n,
-      price: booking.service.p + extra.p,
-      date: booking.date,
-      time: booking.time,
-      minutes: booking.service.m + extra.m,
-      extra: extra.n
-    };
-
-    document.getElementById('bookBody').innerHTML = '<div class="glass card"><p class="subtitle">קובעת את התור ביומן…</p></div>';
-
+    const payload = { customerId: user.id, serviceCode: booking.service.id, service: booking.service.n, price: booking.service.p + extra.p, date: booking.date, time: booking.time, minutes: booking.service.m + extra.m, extra: extra.n };
+    document.getElementById('bookBody').innerHTML = '<div class="glass card"><p class="subtitle">שולחת את בקשת התור לעמית…</p></div>';
     try {
-      const response = await fetch('/api/book', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      const response = await fetch('/api/book', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (response.status === 409) {
         calendar();
         return alert('השעה נתפסה ממש עכשיו. בחרי שעה אחרת.');
       }
       if (!response.ok) throw new Error(data.error || 'BOOKING_FAILED');
-
       const a = mapAppointment(data.appointment);
       appointments.push(a);
       appointments.sort((x, y) => (x.date + x.time).localeCompare(y.date + y.time));
-      document.getElementById('bookBody').innerHTML = `<div class="confirm"><div class="check">✓</div><h2>ההזמנה בוצעה בהצלחה!</h2><p class="heart">מחכה לך באהבה ♡</p><div class="summary glass card"><div><b>שירות</b><span>${a.service}${a.extra ? ' + ' + a.extra : ''}</span></div><div><b>תאריך</b><span>${new Date(a.date + 'T12:00').toLocaleDateString('he-IL')}</span></div><div><b>שעה</b><span>${a.time}</span></div></div><button class="primary" onclick="orders()">סיום</button></div>`;
+      document.getElementById('bookBody').innerHTML = `<div class="confirm"><div class="check">✓</div><h2>בקשת התור נשלחה</h2><p class="heart">ממתינה לאישור של עמית ♡</p><div class="summary glass card"><div><b>סטטוס</b><span>ממתין לאישור</span></div><div><b>שירות</b><span>${a.service}${a.extra ? ' + ' + a.extra : ''}</span></div><div><b>תאריך</b><span>${new Date(a.date + 'T12:00').toLocaleDateString('he-IL')}</span></div><div><b>שעה</b><span>${a.time}</span></div></div><button class="primary" onclick="orders()">סיום</button></div>`;
       window.renderNext();
     } catch (error) {
       console.error(error);
-      document.getElementById('bookBody').innerHTML = '<div class="glass card"><p class="subtitle">לא הצלחתי לקבוע את התור. שום תור לא נשמר.</p></div>';
+      document.getElementById('bookBody').innerHTML = '<div class="glass card"><p class="subtitle">לא הצלחתי לשלוח את בקשת התור. נסי שוב.</p></div>';
     }
   };
 
@@ -173,7 +135,7 @@
     try { await loadAppointments(); } catch (error) { console.error(error); }
     const mine = appointments.filter(x => x.status !== 'cancelled');
     document.getElementById('ordersBody').innerHTML = mine.length
-      ? mine.map(a => `<div class="booking glass"><h3>${a.service}${a.extra ? ' + ' + a.extra : ''}</h3><p>עם עמית<br>${new Date(a.date + 'T12:00').toLocaleDateString('he-IL')}<br>${a.time}</p><button class="cancel" onclick="askCancel('${a.id}')">ביטול תור</button></div>`).join('')
+      ? mine.map(a => `<div class="booking glass"><h3>${a.service}${a.extra ? ' + ' + a.extra : ''}</h3><p><b>${statusLabel(a.status)}</b><br>עם עמית<br>${new Date(a.date + 'T12:00').toLocaleDateString('he-IL')}<br>${a.time}</p><button class="cancel" onclick="askCancel('${a.id}')">ביטול תור</button></div>`).join('')
       : '<div class="card glass">עדיין אין לך תורים</div>';
   };
 
@@ -181,7 +143,7 @@
     const future = appointments.filter(x => x.status !== 'cancelled').sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
     const a = future[0];
     document.getElementById('nextAppointment').innerHTML = a
-      ? `<div class="checkdot">✓</div><div><small>${a.service}</small><br><b>${a.time}</b></div><div><small>${new Date(a.date + 'T12:00').toLocaleDateString('he-IL', { weekday: 'short' })}</small><div class="date-big">${new Date(a.date + 'T12:00').getDate()}</div></div>`
+      ? `<div class="checkdot">${a.status === 'pending' ? '…' : '✓'}</div><div><small>${a.service}</small><br><b>${statusLabel(a.status)}</b><br><span>${a.time}</span></div><div><small>${new Date(a.date + 'T12:00').toLocaleDateString('he-IL', { weekday: 'short' })}</small><div class="date-big">${new Date(a.date + 'T12:00').getDate()}</div></div>`
       : '<div class="checkdot">✦</div><div><small>ההזמנה הקרובה</small><br><b>עדיין אין לך תור</b></div><span>›</span>';
   };
 
@@ -189,11 +151,7 @@
     const a = appointments.find(x => String(x.id) === String(cancelId));
     if (!a) return closeCancel();
     try {
-      const response = await fetch('/api/appointments/' + encodeURIComponent(a.id), {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'בוטל על ידי הלקוחה דרך האפליקציה' })
-      });
+      const response = await fetch('/api/appointments/' + encodeURIComponent(a.id), { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: 'בוטל על ידי הלקוחה דרך האפליקציה' }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'CANCELLATION_FAILED');
       appointments = appointments.filter(x => String(x.id) !== String(a.id));
@@ -217,9 +175,7 @@
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'NOTIFICATIONS_FAILED');
       const items = data.notifications || [];
-      target.innerHTML = items.length
-        ? items.map(n => `<div class="notice glass"><h3>${n.title}</h3><p>${n.body}</p><small class="subtitle">${new Date(n.created_at).toLocaleString('he-IL')}</small></div>`).join('')
-        : '<div class="card glass">אין עדכונים חדשים</div>';
+      target.innerHTML = items.length ? items.map(n => `<div class="notice glass"><h3>${n.title}</h3><p>${n.body}</p><small class="subtitle">${new Date(n.created_at).toLocaleString('he-IL')}</small></div>`).join('') : '<div class="card glass">אין עדכונים חדשים</div>';
     } catch (error) {
       console.error(error);
       target.innerHTML = '<div class="card glass">לא הצלחתי לטעון את העדכונים</div>';
