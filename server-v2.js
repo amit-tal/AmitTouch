@@ -34,6 +34,38 @@ function calendarClient() {
   return google.calendar({ version: 'v3', auth });
 }
 
+async function getAccessibleCalendarIds(calendar) {
+  const ids = new Set();
+  let pageToken;
+  do {
+    const result = await calendar.calendarList.list({ maxResults: 250, pageToken });
+    for (const item of result.data.items || []) {
+      if (item.id) ids.add(item.id);
+    }
+    pageToken = result.data.nextPageToken || undefined;
+  } while (pageToken);
+  ids.add(CALENDAR_ID);
+  return [...ids];
+}
+
+async function getBusyPeriods(calendar, timeMin, timeMax) {
+  const calendarIds = await getAccessibleCalendarIds(calendar);
+  const result = await calendar.freebusy.query({
+    requestBody: {
+      timeMin,
+      timeMax,
+      timeZone: TZ,
+      items: calendarIds.map(id => ({ id }))
+    }
+  });
+  const busy = [];
+  for (const id of calendarIds) {
+    const entry = result.data.calendars?.[id];
+    if (entry?.busy?.length) busy.push(...entry.busy);
+  }
+  return { calendarIds, busy };
+}
+
 async function getCustomer(supabase, id) {
   const { data, error } = await supabase.from('customers').select('*').eq('id', id).single();
   if (error || !data) return null;
@@ -61,7 +93,9 @@ app.get('/api/health', async (_req, res) => {
     const supabase = supabaseClient();
     const { error } = await supabase.from('customers').select('id').limit(1);
     if (error) throw error;
-    res.json({ ok: true, database: true, calendarConfigured: Boolean(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY), approvalFlow: true });
+    const calendar = calendarClient();
+    const calendarIds = await getAccessibleCalendarIds(calendar);
+    res.json({ ok: true, database: true, calendarConfigured: true, approvalFlow: true, calendarsVisible: calendarIds.length });
   } catch (error) {
     console.error(error);
     res.status(500).json({ ok: false, database: false });
@@ -155,15 +189,14 @@ app.get('/api/availability', async (req, res) => {
     const dayStart = DateTime.fromISO(`${date}T00:00`, { zone: TZ });
     const dayEnd = dayStart.plus({ days: 1 });
     const calendar = calendarClient();
-    const busyResult = await calendar.freebusy.query({ requestBody: { timeMin: dayStart.toUTC().toISO(), timeMax: dayEnd.toUTC().toISO(), timeZone: TZ, items: [{ id: CALENDAR_ID }] } });
-    const busy = busyResult.data.calendars?.[CALENDAR_ID]?.busy || [];
+    const { calendarIds, busy } = await getBusyPeriods(calendar, dayStart.toUTC().toISO(), dayEnd.toUTC().toISO());
     const slots = [];
     for (let t = dayStart.set({ hour: 9, minute: 0 }); t.plus({ minutes: duration }) <= dayStart.set({ hour: 19, minute: 0 }); t = t.plus({ minutes: 30 })) {
       const end = t.plus({ minutes: duration });
       const conflict = busy.some(item => t.toMillis() < DateTime.fromISO(item.end).toMillis() && end.toMillis() > DateTime.fromISO(item.start).toMillis());
       if (!conflict) slots.push(t.toFormat('HH:mm'));
     }
-    res.json({ date, slots });
+    res.json({ date, slots, calendarsChecked: calendarIds.length });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'CALENDAR_AVAILABILITY_FAILED' });
@@ -183,17 +216,23 @@ app.post('/api/book', async (req, res) => {
     const start = DateTime.fromISO(`${booking.date}T${booking.time}`, { zone: TZ });
     const blockedEnd = start.plus({ minutes: Number(booking.minutes) + BUFFER_MINUTES });
     const calendar = calendarClient();
-    const busyResult = await calendar.freebusy.query({ requestBody: { timeMin: start.toUTC().toISO(), timeMax: blockedEnd.toUTC().toISO(), timeZone: TZ, items: [{ id: CALENDAR_ID }] } });
-    if ((busyResult.data.calendars?.[CALENDAR_ID]?.busy || []).length) return res.status(409).json({ error: 'SLOT_TAKEN' });
+    const { busy } = await getBusyPeriods(calendar, start.toUTC().toISO(), blockedEnd.toUTC().toISO());
+    if (busy.length) return res.status(409).json({ error: 'SLOT_TAKEN' });
 
-    const eventTitle = isAdminCreated ? `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}` : `ממתין לאישור · AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}`;
-    const event = await calendar.events.insert({ calendarId: CALENDAR_ID, requestBody: {
-      summary: eventTitle,
-      description: `סטטוס: ${status}\nלקוחה: ${customer.first_name} ${customer.last_name}\nנייד: ${customer.phone}\nטיפול: ${booking.service}\nתוספות: ${booking.extra || 'ללא'}\nמחיר: ₪${booking.price}\nזמן טיפול: ${booking.minutes} דקות\nBuffer: ${BUFFER_MINUTES} דקות`,
-      start: { dateTime: start.toISO(), timeZone: TZ },
-      end: { dateTime: blockedEnd.toISO(), timeZone: TZ },
-      transparency: 'opaque'
-    }});
+    const eventTitle = isAdminCreated
+      ? `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}`
+      : `ממתין לאישור · AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}`;
+
+    const event = await calendar.events.insert({
+      calendarId: CALENDAR_ID,
+      requestBody: {
+        summary: eventTitle,
+        description: `סטטוס: ${status}\nלקוחה: ${customer.first_name} ${customer.last_name}\nנייד: ${customer.phone}\nטיפול: ${booking.service}\nתוספות: ${booking.extra || 'ללא'}\nמחיר: ₪${booking.price}\nזמן טיפול: ${booking.minutes} דקות\nBuffer: ${BUFFER_MINUTES} דקות`,
+        start: { dateTime: start.toISO(), timeZone: TZ },
+        end: { dateTime: blockedEnd.toISO(), timeZone: TZ },
+        transparency: 'opaque'
+      }
+    });
     createdEventId = event.data.id;
 
     const extras = booking.extra ? [{ name: booking.extra }] : [];
@@ -242,10 +281,14 @@ app.post('/api/admin/appointments/:appointmentId/approve', async (req, res) => {
     if (appointment.status === 'cancelled') return res.status(409).json({ error: 'APPOINTMENT_CANCELLED' });
     const customer = await getCustomer(supabase, appointment.customer_id);
     if (appointment.google_event_id && customer) {
-      await calendarClient().events.patch({ calendarId: CALENDAR_ID, eventId: appointment.google_event_id, requestBody: {
-        summary: `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${appointment.service_name}`,
-        description: `סטטוס: confirmed\nלקוחה: ${customer.first_name} ${customer.last_name}\nנייד: ${customer.phone}\nטיפול: ${appointment.service_name}\nמחיר: ₪${appointment.total_price}\nזמן טיפול: ${appointment.treatment_minutes} דקות\nBuffer: ${appointment.buffer_minutes} דקות`
-      }});
+      await calendarClient().events.patch({
+        calendarId: CALENDAR_ID,
+        eventId: appointment.google_event_id,
+        requestBody: {
+          summary: `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${appointment.service_name}`,
+          description: `סטטוס: confirmed\nלקוחה: ${customer.first_name} ${customer.last_name}\nנייד: ${customer.phone}\nטיפול: ${appointment.service_name}\nמחיר: ₪${appointment.total_price}\nזמן טיפול: ${appointment.treatment_minutes} דקות\nBuffer: ${appointment.buffer_minutes} דקות`
+        }
+      });
     }
     const { data: updated, error: updateError } = await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', appointment.id).select().single();
     if (updateError) throw updateError;
