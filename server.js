@@ -38,7 +38,7 @@ app.get('/', (_req, res) => {
   try {
     let html = fs.readFileSync('./index.html', 'utf8');
     const pwaHead = `\n<link rel="manifest" href="/manifest.webmanifest">\n<meta name="theme-color" content="#286d67">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-status-bar-style" content="default">\n<meta name="apple-mobile-web-app-title" content="AMIT TOUCH">\n<link rel="apple-touch-icon" href="/assets/amit-touch-logo.svg">`;
-    const pwaScript = `<script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));</script>`;
+    const pwaScript = `<script src="/app-db.js"></script><script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));</script>`;
     html = html.replace('</head>', pwaHead + '</head>');
     html = html.replace('</body>', pwaScript + '</body>');
     res.type('html').send(html);
