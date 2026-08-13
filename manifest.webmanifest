@@ -1,0 +1,21 @@
+{
+  "name": "AMIT TOUCH Nail Studio",
+  "short_name": "AMIT TOUCH",
+  "description": "אפליקציית הזמנת התורים של AMIT TOUCH Nail Studio",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8f1ea",
+  "theme_color": "#286d67",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/assets/amit-touch-logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
