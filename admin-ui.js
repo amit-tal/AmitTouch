@@ -1,94 +1,17 @@
 (function(){
-  const ADMIN_SERVICES={
-    gel:{id:'gel',name:'לק ג׳ל',price:150,minutes:60},
-    fill:{id:'fill',name:'מילוי',price:200,minutes:90},
-    new:{id:'new',name:'בנייה חדשה',price:250,minutes:120},
-    remove:{id:'remove',name:'הסרה בלבד',price:25,minutes:30}
-  };
+  const ui=document.createElement('style');
+  ui.textContent=`html,body{background:linear-gradient(180deg,#fffaf6,#f8f1eb)!important}.app{max-width:430px!important;padding:12px 14px 104px!important}.glass{background:linear-gradient(145deg,rgba(255,255,255,.80),rgba(255,255,255,.34))!important;border:1px solid rgba(255,255,255,.94)!important;box-shadow:0 12px 30px rgba(55,69,65,.08),inset 0 1px 0 #fff!important;backdrop-filter:blur(24px) saturate(145%)!important;-webkit-backdrop-filter:blur(24px) saturate(145%)!important}.card,.booking,.notice{border-radius:16px!important}.primary{min-height:54px!important;border-radius:13px!important;background:linear-gradient(135deg,#34766f,#235d58)!important;box-shadow:0 9px 22px rgba(34,91,85,.18)!important}.auth{padding-top:20px!important}.auth .logo{width:min(315px,86vw)!important;margin:2px auto 10px!important}.auth h1{font-size:28px!important;font-weight:500!important}.field-wrap{height:62px!important;border-radius:16px!important}.splash{background:linear-gradient(180deg,#fffaf6,#f8eee7)!important}.splash-logo{width:min(338px,88vw)!important}.home-hero .logo{width:168px!important}.hero-photo{height:215px!important;border-radius:23px!important}.quick{min-height:82px!important;border-radius:14px!important}.nav{bottom:max(8px,env(safe-area-inset-bottom))!important;width:min(404px,calc(100% - 20px))!important;height:64px!important;border-radius:22px!important;background:rgba(255,255,255,.78)!important;border:1px solid rgba(255,255,255,.95)!important;box-shadow:0 12px 32px rgba(52,66,62,.10)!important}.service-row{border-radius:15px!important;padding:12px 13px!important}.art{width:104px!important;height:104px!important}.time{border-radius:9px!important;background:rgba(255,255,255,.54)!important}.time.sel,.day.sel{background:#2f716b!important}.menu{border-radius:15px!important}.check{width:72px!important;height:72px!important}.admin-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.admin-actions button{min-height:42px;border-radius:12px;font-size:11px}.admin-approve{border:0;background:#2f716b;color:#fff}.admin-reject{border:1px solid rgba(176,105,94,.18);background:#fff4f1;color:#a76459}`;
+  document.head.appendChild(ui);
 
-  function cleanPhone(value){
-    let phone=String(value||'').replace(/\D/g,'');
-    if(phone.startsWith('972')&&phone.length>=11)phone='0'+phone.slice(3);
-    return phone;
-  }
-
-  async function resolveCustomer(fullName,phone){
-    const lookup=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName,phone})});
-    if(lookup.ok){const data=await lookup.json();if(data.role==='admin')throw new Error('ADMIN_NOT_CUSTOMER');return data.customer;}
-    if(lookup.status!==404)throw new Error('CUSTOMER_LOOKUP_FAILED');
-    const parts=fullName.replace(/\s+/g,' ').trim().split(' ');
-    const firstName=parts.shift()||'';
-    const lastName=parts.join(' ');
-    if(!firstName||!lastName)throw new Error('FULL_NAME_REQUIRED');
-    const create=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({firstName,lastName,phone,birthDate:null})});
-    const data=await create.json();
-    if(!create.ok)throw new Error(data.error||'CUSTOMER_CREATE_FAILED');
-    return data.customer;
-  }
-
-  function adminShell(){
-    return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:10px 0 16px"><button class="primary" style="margin:0" onclick="openAdminBooking()">＋ קביעת תור</button><button class="glass card" style="margin:0;border:0;font-weight:600" onclick="renderAdmin()">↻ רענון</button></div>`;
-  }
-
-  window.openAdminBooking=function(){
-    const target=document.getElementById('adminBody');if(!target)return;
-    target.innerHTML=`${adminShell()}<div class="glass card"><h3 style="margin-top:0">קביעת תור ידנית</h3><p class="subtitle">תור שאת קובעת בעצמך מאושר מיד ונכנס ל־Google Calendar.</p><input id="adminCustomerName" class="field" placeholder="שם מלא"><input id="adminCustomerPhone" class="field" inputmode="tel" placeholder="מספר נייד"><select id="adminService" class="field"><option value="gel">לק ג׳ל · ₪150 · שעה</option><option value="fill">מילוי · ₪200 · שעה וחצי</option><option value="new">בנייה חדשה · ₪250 · שעתיים</option><option value="remove">הסרה בלבד · ₪25</option></select><input id="adminDate" class="field" type="date"><input id="adminTime" class="field" type="time" step="1800"><button class="primary" onclick="adminCreateBooking()">שמירת התור ביומן</button><button class="secondary" onclick="renderAdmin()">ביטול וחזרה</button></div>`;
-  };
-
-  window.adminCreateBooking=async function(){
-    const fullName=document.getElementById('adminCustomerName').value.replace(/\s+/g,' ').trim();
-    const phone=cleanPhone(document.getElementById('adminCustomerPhone').value);
-    const serviceId=document.getElementById('adminService').value;
-    const date=document.getElementById('adminDate').value;
-    const time=document.getElementById('adminTime').value;
-    if(!fullName||phone.length<9||!date||!time)return alert('יש למלא שם מלא, נייד, שירות, תאריך ושעה');
-    const svc=ADMIN_SERVICES[serviceId];
-    try{
-      const customer=await resolveCustomer(fullName,phone);
-      const availability=await fetch(`/api/availability?date=${encodeURIComponent(date)}&minutes=${svc.minutes}`);
-      const availabilityData=await availability.json();
-      if(!availability.ok)throw new Error(availabilityData.error||'AVAILABILITY_FAILED');
-      if(!availabilityData.slots.includes(time))return alert('השעה שבחרת אינה פנויה ביומן. בחרי שעה אחרת.');
-      const response=await fetch('/api/book',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerId:customer.id,serviceCode:svc.id,service:svc.name,price:svc.price,date,time,minutes:svc.minutes,extra:'נקבע ידנית על ידי עמית',createdByAdmin:true})});
-      const data=await response.json();
-      if(response.status===409)return alert('השעה נתפסה ממש עכשיו ביומן');
-      if(!response.ok)throw new Error(data.error||'BOOKING_FAILED');
-      alert('התור נשמר כמאושר ונוסף ל־Google Calendar');
-      await window.renderAdmin();
-    }catch(error){console.error(error);if(error.message==='FULL_NAME_REQUIRED')return alert('ללקוחה חדשה יש להזין שם פרטי ושם משפחה');alert('לא הצלחתי לשמור את התור. נסי שוב.');}
-  };
-
-  window.adminApproveAppointment=async function(id){
-    if(!confirm('לאשר את התור?'))return;
-    try{const r=await fetch('/api/admin/appointments/'+encodeURIComponent(id)+'/approve',{method:'POST'});const d=await r.json();if(!r.ok)throw new Error(d.error||'APPROVAL_FAILED');alert('התור אושר');await window.renderAdmin();}catch(e){console.error(e);alert('לא הצלחתי לאשר את התור');}
-  };
-
-  window.adminRejectAppointment=async function(id){
-    if(!confirm('לדחות את בקשת התור?'))return;
-    try{const r=await fetch('/api/admin/appointments/'+encodeURIComponent(id)+'/reject',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:'בקשת התור לא אושרה על ידי עמית'})});const d=await r.json();if(!r.ok)throw new Error(d.error||'REJECTION_FAILED');alert('בקשת התור נדחתה');await window.renderAdmin();}catch(e){console.error(e);alert('לא הצלחתי לדחות את הבקשה');}
-  };
-
-  window.adminCancelAppointment=async function(appointmentId,customerLabel){
-    if(!appointmentId)return;
-    if(!confirm(`לבטל את התור${customerLabel?' של '+customerLabel:''}?\nהתור יימחק גם מ־Google Calendar.`))return;
-    try{const response=await fetch('/api/appointments/'+encodeURIComponent(appointmentId),{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:'בוטל על ידי עמית דרך ממשק המנהלת'})});const data=await response.json();if(!response.ok)throw new Error(data.error||'CANCELLATION_FAILED');alert('התור בוטל ונמחק מהיומן');await window.renderAdmin();}catch(error){console.error(error);alert('לא הצלחתי לבטל את התור. נסי שוב.');}
-  };
-
+  const ADMIN_SERVICES={gel:{id:'gel',name:'לק ג׳ל',price:150,minutes:60},fill:{id:'fill',name:'מילוי',price:200,minutes:90},new:{id:'new',name:'בנייה חדשה',price:250,minutes:120},remove:{id:'remove',name:'הסרה בלבד',price:25,minutes:30}};
+  function cleanPhone(value){let phone=String(value||'').replace(/\D/g,'');if(phone.startsWith('972')&&phone.length>=11)phone='0'+phone.slice(3);return phone;}
+  async function resolveCustomer(fullName,phone){const lookup=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName,phone})});if(lookup.ok){const data=await lookup.json();if(data.role==='admin')throw new Error('ADMIN_NOT_CUSTOMER');return data.customer;}if(lookup.status!==404)throw new Error('CUSTOMER_LOOKUP_FAILED');const parts=fullName.replace(/\s+/g,' ').trim().split(' ');const firstName=parts.shift()||'';const lastName=parts.join(' ');if(!firstName||!lastName)throw new Error('FULL_NAME_REQUIRED');const create=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({firstName,lastName,phone,birthDate:null})});const data=await create.json();if(!create.ok)throw new Error(data.error||'CUSTOMER_CREATE_FAILED');return data.customer;}
+  function adminShell(){return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:10px 0 16px"><button class="primary" style="margin:0" onclick="openAdminBooking()">＋ קביעת תור</button><button class="glass card" style="margin:0;border:0;font-weight:600" onclick="renderAdmin()">↻ רענון</button></div>`;}
+  window.openAdminBooking=function(){const target=document.getElementById('adminBody');if(!target)return;target.innerHTML=`${adminShell()}<div class="glass card"><h3 style="margin-top:0">קביעת תור ידנית</h3><p class="subtitle">תור שאת קובעת בעצמך מאושר מיד ונכנס ל־Google Calendar.</p><input id="adminCustomerName" class="field" placeholder="שם מלא"><input id="adminCustomerPhone" class="field" inputmode="tel" placeholder="מספר נייד"><select id="adminService" class="field"><option value="gel">לק ג׳ל · ₪150 · שעה</option><option value="fill">מילוי · ₪200 · שעה וחצי</option><option value="new">בנייה חדשה · ₪250 · שעתיים</option><option value="remove">הסרה בלבד · ₪25</option></select><input id="adminDate" class="field" type="date"><input id="adminTime" class="field" type="time" step="1800"><button class="primary" onclick="adminCreateBooking()">שמירת התור ביומן</button><button class="secondary" onclick="renderAdmin()">ביטול וחזרה</button></div>`;};
+  window.adminCreateBooking=async function(){const fullName=document.getElementById('adminCustomerName').value.replace(/\s+/g,' ').trim();const phone=cleanPhone(document.getElementById('adminCustomerPhone').value);const serviceId=document.getElementById('adminService').value;const date=document.getElementById('adminDate').value;const time=document.getElementById('adminTime').value;if(!fullName||phone.length<9||!date||!time)return alert('יש למלא שם מלא, נייד, שירות, תאריך ושעה');const svc=ADMIN_SERVICES[serviceId];try{const customer=await resolveCustomer(fullName,phone);const availability=await fetch(`/api/availability?date=${encodeURIComponent(date)}&minutes=${svc.minutes}`);const availabilityData=await availability.json();if(!availability.ok)throw new Error(availabilityData.error||'AVAILABILITY_FAILED');if(!availabilityData.slots.includes(time))return alert('השעה שבחרת אינה פנויה ביומן. בחרי שעה אחרת.');const response=await fetch('/api/book',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerId:customer.id,serviceCode:svc.id,service:svc.name,price:svc.price,date,time,minutes:svc.minutes,extra:'נקבע ידנית על ידי עמית',createdByAdmin:true})});const data=await response.json();if(response.status===409)return alert('השעה נתפסה ממש עכשיו ביומן');if(!response.ok)throw new Error(data.error||'BOOKING_FAILED');alert('התור נשמר כמאושר ונוסף ל־Google Calendar');await window.renderAdmin();}catch(error){console.error(error);if(error.message==='FULL_NAME_REQUIRED')return alert('ללקוחה חדשה יש להזין שם פרטי ושם משפחה');alert('לא הצלחתי לשמור את התור. נסי שוב.');}};
+  window.adminApproveAppointment=async function(id){if(!confirm('לאשר את התור?'))return;try{const r=await fetch('/api/admin/appointments/'+encodeURIComponent(id)+'/approve',{method:'POST'});const d=await r.json();if(!r.ok)throw new Error(d.error||'APPROVAL_FAILED');alert('התור אושר');await window.renderAdmin();}catch(e){console.error(e);alert('לא הצלחתי לאשר את התור');}};
+  window.adminRejectAppointment=async function(id){if(!confirm('לדחות את בקשת התור?'))return;try{const r=await fetch('/api/admin/appointments/'+encodeURIComponent(id)+'/reject',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:'בקשת התור לא אושרה על ידי עמית'})});const d=await r.json();if(!r.ok)throw new Error(d.error||'REJECTION_FAILED');alert('בקשת התור נדחתה');await window.renderAdmin();}catch(e){console.error(e);alert('לא הצלחתי לדחות את הבקשה');}};
+  window.adminCancelAppointment=async function(appointmentId,customerLabel){if(!appointmentId)return;if(!confirm(`לבטל את התור${customerLabel?' של '+customerLabel:''}?\nהתור יימחק גם מ־Google Calendar.`))return;try{const response=await fetch('/api/appointments/'+encodeURIComponent(appointmentId),{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:'בוטל על ידי עמית דרך ממשק המנהלת'})});const data=await response.json();if(!response.ok)throw new Error(data.error||'CANCELLATION_FAILED');alert('התור בוטל ונמחק מהיומן');await window.renderAdmin();}catch(error){console.error(error);alert('לא הצלחתי לבטל את התור. נסי שוב.');}};
   function info(a){const c=a.customer||{};return{name:[c.first_name,c.last_name].filter(Boolean).join(' ')||'לקוחה',phone:c.phone||'',when:new Date(a.starts_at).toLocaleString('he-IL',{dateStyle:'short',timeStyle:'short'}),service:a.service_name||'',price:Number(a.total_price||0)};}
-
-  window.renderAdmin=async function(){
-    const target=document.getElementById('adminBody');if(!target)return;
-    target.innerHTML=adminShell()+'<div class="card glass"><p class="subtitle">טוענת תורים…</p></div>';
-    try{
-      const response=await fetch('/api/admin/appointments');
-      const data=await response.json();
-      if(!response.ok)throw new Error(data.error||'ADMIN_APPOINTMENTS_FAILED');
-      const rows=(data.appointments||[]).filter(a=>a.status!=='cancelled');
-      const pending=rows.filter(a=>a.status==='pending');
-      const confirmed=rows.filter(a=>a.status==='confirmed');
-      const pendingHtml=pending.length?'<div class="section-title">ממתינים לאישור</div>'+pending.map(a=>{const x=info(a);return `<div class="notice glass"><h3>${x.name}</h3><p>${x.service}<br>${x.when}<br>${x.phone}<br>₪${x.price}</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="primary" style="margin:0" onclick="adminApproveAppointment('${a.id}')">אישור</button><button class="cancel" style="margin:0" onclick="adminRejectAppointment('${a.id}')">דחייה</button></div></div>`}).join(''):'<div class="card glass"><p class="subtitle">אין בקשות שממתינות לאישור.</p></div>';
-      const confirmedHtml=confirmed.length?'<div class="section-title">תורים מאושרים</div>'+confirmed.map(a=>{const x=info(a);return `<div class="notice glass"><h3>${x.name}</h3><p>${x.service}<br>${x.when}<br>${x.phone}<br>₪${x.price}</p><button class="cancel" onclick="adminCancelAppointment('${a.id}','${x.name.replace(/'/g,'&#39;')}')">ביטול התור</button></div>`}).join(''):'<div class="card glass"><p class="subtitle">אין כרגע תורים מאושרים.</p></div>';
-      target.innerHTML=adminShell()+pendingHtml+confirmedHtml;
-    }catch(error){console.error(error);target.innerHTML=adminShell()+'<div class="card glass">לא הצלחתי לטעון את נתוני הניהול</div>';}
-  };
+  window.renderAdmin=async function(){const target=document.getElementById('adminBody');if(!target)return;target.innerHTML=adminShell()+'<div class="card glass"><p class="subtitle">טוענת תורים…</p></div>';try{const response=await fetch('/api/admin/appointments');const data=await response.json();if(!response.ok)throw new Error(data.error||'ADMIN_APPOINTMENTS_FAILED');const rows=(data.appointments||[]).filter(a=>a.status!=='cancelled');const pending=rows.filter(a=>a.status==='pending');const confirmed=rows.filter(a=>a.status==='confirmed');const pendingHtml=pending.length?'<div class="section-title">ממתינים לאישור</div>'+pending.map(a=>{const x=info(a);return `<div class="notice glass"><h3>${x.name}</h3><p>${x.service}<br>${x.when}<br>${x.phone}<br>₪${x.price}</p><div class="admin-actions"><button class="admin-approve" onclick="adminApproveAppointment('${a.id}')">אישור</button><button class="admin-reject" onclick="adminRejectAppointment('${a.id}')">דחייה</button></div></div>`}).join(''):'<div class="card glass"><p class="subtitle">אין בקשות שממתינות לאישור.</p></div>';const confirmedHtml=confirmed.length?'<div class="section-title">תורים מאושרים</div>'+confirmed.map(a=>{const x=info(a);return `<div class="notice glass"><h3>${x.name}</h3><p>${x.service}<br>${x.when}<br>${x.phone}<br>₪${x.price}</p><button class="cancel" onclick="adminCancelAppointment('${a.id}','${x.name.replace(/'/g,'&#39;')}')">ביטול התור</button></div>`}).join(''):'<div class="card glass"><p class="subtitle">אין כרגע תורים מאושרים.</p></div>';target.innerHTML=adminShell()+pendingHtml+confirmedHtml;}catch(error){console.error(error);target.innerHTML=adminShell()+'<div class="card glass">לא הצלחתי לטעון את נתוני הניהול</div>';}};
 })();
