@@ -13,32 +13,21 @@ const BUFFER_MINUTES = 30;
 app.get('/', (_req, res) => {
   try {
     let html = fs.readFileSync('./index.html', 'utf8');
-    const loginFix = `<script>
-      window.login = function() {
-        const nameInput = document.getElementById('name');
-        const phoneInput = document.getElementById('phone');
-        const n = (nameInput?.value || '').replace(/\\s+/g, ' ').trim();
-        const p = (phoneInput?.value || '').replace(/\\D/g, '');
-        if (!n || p.length < 9) {
-          alert('יש למלא שם מלא ומספר נייד');
-          return;
-        }
-        user = { name: n, phone: p };
-        if (n === ADMIN_NAME && p === ADMIN_PHONE) {
-          show('admin');
-          renderAdmin();
-          return;
-        }
-        const helloEl = document.getElementById('hello');
-        if (helloEl) helloEl.textContent = 'היי ' + n.split(' ')[0] + ' ♡';
-        const navEl = document.getElementById('nav');
-        if (navEl) navEl.classList.add('show');
-        renderServices();
-        renderNext();
-        show('home');
-      };
+    const pwaHead = `
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#286d67">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AMIT TOUCH">
+<link rel="apple-touch-icon" href="/assets/amit-touch-logo.png">`;
+    const pwaScript = `<script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));
+      }
     </script>`;
-    html = html.replace('</body>', loginFix + '</body>');
+    html = html.replace('</head>', pwaHead + '</head>');
+    html = html.replace('</body>', pwaScript + '</body>');
     res.type('html').send(html);
   } catch (e) {
     console.error(e);
