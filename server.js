@@ -1,14 +1,52 @@
 import express from 'express';
 import { google } from 'googleapis';
 import { DateTime } from 'luxon';
+import fs from 'fs';
 
 const app = express();
 app.use(express.json());
-app.use(express.static('.'));
 
 const TZ = 'Asia/Jerusalem';
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
 const BUFFER_MINUTES = 30;
+
+app.get('/', (_req, res) => {
+  try {
+    let html = fs.readFileSync('./index.html', 'utf8');
+    const loginFix = `<script>
+      window.login = function() {
+        const nameInput = document.getElementById('name');
+        const phoneInput = document.getElementById('phone');
+        const n = (nameInput?.value || '').replace(/\\s+/g, ' ').trim();
+        const p = (phoneInput?.value || '').replace(/\\D/g, '');
+        if (!n || p.length < 9) {
+          alert('יש למלא שם מלא ומספר נייד');
+          return;
+        }
+        user = { name: n, phone: p };
+        if (n === ADMIN_NAME && p === ADMIN_PHONE) {
+          show('admin');
+          renderAdmin();
+          return;
+        }
+        const helloEl = document.getElementById('hello');
+        if (helloEl) helloEl.textContent = 'היי ' + n.split(' ')[0] + ' ♡';
+        const navEl = document.getElementById('nav');
+        if (navEl) navEl.classList.add('show');
+        renderServices();
+        renderNext();
+        show('home');
+      };
+    </script>`;
+    html = html.replace('</body>', loginFix + '</body>');
+    res.type('html').send(html);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send('Unable to load app');
+  }
+});
+
+app.use(express.static('.'));
 
 function calendarClient() {
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
