@@ -103,7 +103,7 @@
     window.clearTimeout(window.__amitTouchSplashTimer);
     window.__amitTouchSplashTimer=window.setTimeout(()=>{
       splash.classList.add('brand-done','hide');
-    },5000);
+    },3000);
   }catch(e){
     console.error('AMIT TOUCH brand assets failed',e);
     splash.classList.remove('brand-loading','hide');
@@ -111,6 +111,6 @@
     splash.style.visibility='visible';
     splash.style.opacity='1';
     window.clearTimeout(window.__amitTouchSplashTimer);
-    window.__amitTouchSplashTimer=window.setTimeout(()=>splash.classList.add('brand-done','hide'),5000);
+    window.__amitTouchSplashTimer=window.setTimeout(()=>splash.classList.add('brand-done','hide'),3000);
   }
 })();
