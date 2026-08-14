@@ -1,4 +1,7 @@
 (async function(){
+  if(window.__AMIT_TOUCH_SPLASH_CONTROLLER__)return;
+  window.__AMIT_TOUCH_SPLASH_CONTROLLER__=true;
+
   const splash=document.getElementById('splash');
   if(!splash)return;
 
@@ -6,6 +9,13 @@
   splash.classList.add('brand-loading');
   splash.style.opacity='0';
   splash.style.visibility='hidden';
+
+  const splashLogo=splash.querySelector('img.splash-logo');
+  if(splashLogo){
+    splashLogo.classList.remove('splash-logo');
+    splashLogo.classList.add('splash-brand-logo');
+    splashLogo.src='/assets/amit-touch-logo.svg?v=20260814-5';
+  }
 
   const guard=document.createElement('style');
   guard.id='amit-touch-splash-guard';
@@ -35,8 +45,8 @@
 
     const imgUrl=base64BlobUrl(img64,'image/webp');
     const fontUrl=base64BlobUrl(font64,'font/woff2');
-    const logoUrl='/assets/amit-touch-logo.svg?v=20260814-4';
-    const heartUrl='/assets/amit-touch-heart.svg?v=20260814-4';
+    const logoUrl='/assets/amit-touch-logo.svg?v=20260814-5';
+    const heartUrl='/assets/amit-touch-heart.svg?v=20260814-5';
 
     await Promise.all([
       new Promise(resolve=>{const i=new Image();i.onload=i.onerror=resolve;i.src=logoUrl;}),
@@ -44,7 +54,8 @@
       new Promise(resolve=>{const i=new Image();i.onload=i.onerror=resolve;i.src=imgUrl;})
     ]);
 
-    document.querySelectorAll('img.logo, img.splash-logo').forEach(el=>{el.src=logoUrl;});
+    document.querySelectorAll('img.logo').forEach(el=>{el.src=logoUrl;});
+    if(splashLogo)splashLogo.src=logoUrl;
 
     const oldHeart=splash.querySelector('.splash-heart');
     if(oldHeart){
@@ -66,7 +77,7 @@
       :root{--hand:'GveretLevin',cursive}
       #splash{background:#fbf5ef url('${imgUrl}') center/cover no-repeat!important;transition:opacity .5s ease,visibility .5s ease!important}
       #splash .splash-inner{width:min(430px,100%)!important;height:100%!important;padding:0 22px!important;display:flex!important;flex-direction:column!important;align-items:center!important;position:relative!important;text-align:center!important}
-      #splash .splash-logo{display:block!important;width:min(335px,84vw)!important;max-height:43vh!important;object-fit:contain!important;margin:12.5vh auto 0!important;flex:0 0 auto!important}
+      #splash .splash-brand-logo{display:block!important;width:min(335px,84vw)!important;max-height:43vh!important;object-fit:contain!important;margin:12.5vh auto 0!important;flex:0 0 auto!important}
       #splash .splash-tag{display:block!important;font-family:var(--hand)!important;font-size:25px!important;line-height:1.55!important;color:#285f5a!important;margin:36px 0 0!important;letter-spacing:0!important;font-weight:100!important;direction:rtl!important}
       #splash .splash-heart{display:block!important;width:42px!important;height:42px!important;margin:20px auto 0!important;line-height:1!important}
       #splash .splash-heart-image{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important}
