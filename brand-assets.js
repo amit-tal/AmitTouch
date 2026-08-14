@@ -17,8 +17,11 @@
     style.textContent=`@font-face{font-family:'GveretLevin';src:url('${fontUrl}') format('woff2');font-weight:400;font-style:normal;font-display:swap}
     :root{--hand:'GveretLevin',cursive}
     .splash{background:#fbf5ef url('${imgUrl}') center/cover no-repeat!important}
-    .splash-inner{padding:0!important}
-    .splash-logo,.splash-tag,.splash-heart,.brush-stroke,.brush-handle{display:none!important}
+    .splash-inner{padding:14vh 22px 40px!important}
+    .splash-logo{display:block!important;width:min(340px,86vw)!important;margin:6.5vh auto 0!important}
+    .splash-tag{display:block!important;font-family:var(--hand)!important;font-size:30px!important;line-height:1.18!important;color:#285f5a!important;margin-top:25px!important;letter-spacing:0!important}
+    .splash-heart{display:block!important;font-family:var(--hand)!important;font-size:31px!important;color:#df8f83!important;margin-top:8px!important}
+    .brush-stroke,.brush-handle{display:none!important}
     .handwriting,.hero-copy strong{font-family:var(--hand)!important;font-weight:400!important;letter-spacing:0!important}
     .hero-copy strong{font-size:25px!important;line-height:1.05!important}`;
     document.head.appendChild(style);
