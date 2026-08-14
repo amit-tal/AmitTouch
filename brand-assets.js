@@ -74,7 +74,9 @@
     style.id='amit-touch-brand-style';
     style.textContent=`
       @font-face{font-family:'GveretLevin';src:url('${fontUrl}') format('woff2');font-weight:100 400;font-style:normal;font-display:block}
-      :root{--hand:'GveretLevin',cursive}
+      :root{--hand:'GveretLevin',cursive;--ui-font:'Inter',Arial,sans-serif}
+      html,body,body *,button,input,select,textarea,option,optgroup,label,a,p,span,div,h1,h2,h3,h4,h5,h6,strong,b,small,nav,section,header,footer{font-family:var(--ui-font)!important}
+      body *::before,body *::after{font-family:var(--ui-font)!important}
       #splash{background:#fbf5ef url('${imgUrl}') center/cover no-repeat!important;transition:opacity .5s ease,visibility .5s ease!important}
       #splash .splash-inner{width:min(430px,100%)!important;height:100%!important;padding:0 22px!important;display:flex!important;flex-direction:column!important;align-items:center!important;position:relative!important;text-align:center!important}
       #splash .splash-brand-logo{display:block!important;width:min(335px,84vw)!important;max-height:43vh!important;object-fit:contain!important;margin:12.5vh auto 0!important;flex:0 0 auto!important}
@@ -82,7 +84,8 @@
       #splash .splash-heart{display:block!important;width:42px!important;height:42px!important;margin:20px auto 0!important;line-height:1!important}
       #splash .splash-heart-image{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important}
       #splash .brush-stroke,#splash .brush-handle{display:none!important}
-      .handwriting,.hero-copy strong,.confirm .heart{font-family:var(--hand)!important;font-weight:100!important;letter-spacing:0!important}
+      .handwriting,.handwriting *,[data-handwriting],[data-handwriting] *,.hero-copy strong,.confirm .heart{font-family:var(--hand)!important;font-weight:100!important;letter-spacing:0!important}
+      .handwriting::before,.handwriting::after,[data-handwriting]::before,[data-handwriting]::after,.hero-copy strong::before,.hero-copy strong::after,.confirm .heart::before,.confirm .heart::after{font-family:var(--hand)!important}
       .hero-copy strong{font-size:25px!important;line-height:1.25!important}
       .confirm .heart{font-size:24px!important;line-height:1.25!important}
     `;
