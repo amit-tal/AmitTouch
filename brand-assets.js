@@ -22,8 +22,9 @@
     .splash-tag{display:block!important;font-family:var(--hand)!important;font-size:30px!important;line-height:1.18!important;color:#285f5a!important;margin-top:25px!important;letter-spacing:0!important}
     .splash-heart{display:block!important;font-family:var(--hand)!important;font-size:31px!important;color:#df8f83!important;margin-top:8px!important}
     .brush-stroke,.brush-handle{display:none!important}
-    .handwriting,.hero-copy strong{font-family:var(--hand)!important;font-weight:400!important;letter-spacing:0!important}
-    .hero-copy strong{font-size:25px!important;line-height:1.05!important}`;
+    .handwriting,.hero-copy strong,.confirm .heart{font-family:var(--hand)!important;font-weight:400!important;letter-spacing:0!important}
+    .hero-copy strong{font-size:25px!important;line-height:1.05!important}
+    .confirm .heart{font-size:24px!important;line-height:1.15!important}`;
     document.head.appendChild(style);
     document.querySelectorAll('[data-handwriting]').forEach(el=>el.classList.add('handwriting'));
     window.AMIT_TOUCH_HANDWRITING_FONT='GveretLevin';
