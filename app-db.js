@@ -1,3 +1,23 @@
+(function initFinalSplashOnly(){
+  const splash=document.getElementById('splash');
+  const guard=document.createElement('style');
+  guard.textContent=`.splash{opacity:0!important;visibility:visible!important;background:#fbf5ef!important}.splash.brand-ready{opacity:1!important}.splash.hide{opacity:0!important;visibility:hidden!important}.splash .brush-stroke,.splash .brush-handle{display:none!important}.splash-heart img{display:block;width:46px;height:46px;object-fit:contain;margin:0 auto}`;
+  document.head.appendChild(guard);
+  if(splash){
+    const logo=splash.querySelector('.splash-logo');
+    const tag=splash.querySelector('.splash-tag');
+    const heart=splash.querySelector('.splash-heart');
+    if(logo) logo.src='/assets/amit-touch-logo.svg?v=20260814';
+    if(tag) tag.textContent='הטאץ׳ הקטן שעושה את כל ההבדל';
+    if(heart) heart.innerHTML='<img src="/assets/amit-touch-heart.svg?v=20260814" alt="">';
+  }
+  const brandScript=document.createElement('script');
+  brandScript.src='/brand-assets.js?v=20260814b';
+  brandScript.onload=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{if(splash)splash.classList.add('brand-ready')}));
+  brandScript.onerror=()=>{if(splash){splash.style.background='#fbf5ef';splash.classList.add('brand-ready')}};
+  document.head.appendChild(brandScript);
+})();
+
 (function () {
   function cleanPhoneValue(value) {
     let phone = String(value || '').replace(/\D/g, '');
