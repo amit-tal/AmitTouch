@@ -1,37 +1,26 @@
-const CACHE = 'amit-touch-dev-v3';
-
+// AMIT TOUCH service worker — network only.
+// Remove every cache created by older app versions so stale UI assets can never win.
 self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))))
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(key => caches.delete(key)));
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener('message', event => {
+  if (event.data === 'CLEAR_AMIT_TOUCH_CACHES') {
+    event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))));
+  }
 });
 
 self.addEventListener('fetch', event => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-
-  const url = new URL(req.url);
+  if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api/')) return;
-
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req, { cache: 'no-store' }).catch(() => caches.match(req))
-    );
-    return;
-  }
-
-  if (/\.(?:js|css|html|json|webmanifest|svg|png|jpg|jpeg|webp|woff2?|otf|ttf)$/i.test(url.pathname)) {
-    event.respondWith(
-      fetch(req, { cache: 'no-store' }).catch(() => caches.match(req))
-    );
-    return;
-  }
-
-  event.respondWith(fetch(req, { cache: 'no-store' }));
+  event.respondWith(fetch(event.request, { cache: 'no-store' }));
 });
