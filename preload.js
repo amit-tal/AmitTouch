@@ -9,7 +9,7 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
 
   const isBuffer = Buffer.isBuffer(result);
   let html = isBuffer ? result.toString('utf8') : String(result);
-  const build = '20260815-2148';
+  const build = '20260815-2212';
   const finalLogo = `/assets/amitouch_logo_vector.png?v=${build}`;
 
   html = html
@@ -32,7 +32,7 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
     "/* splash timing is controlled exclusively by brand-assets.js */"
   );
 
-  const runtime = `<script>(function(){const build='${build}',logo='${finalLogo}';function fixLogos(){document.querySelectorAll('img.logo,img.splash-logo,img.splash-brand-logo').forEach(i=>{if(i.getAttribute('src')!==logo)i.setAttribute('src',logo);});}function load(src,key){if(document.querySelector('script[data-amit="'+key+'"]'))return;const s=document.createElement('script');s.src=src+'?v='+build;s.dataset.amit=key;document.body.appendChild(s);}document.addEventListener('DOMContentLoaded',fixLogos,{once:true});window.addEventListener('load',()=>{fixLogos();load('/login-polish.js','login');load('/register-polish.js','register');setTimeout(()=>load('/date-picker-polish.js','date-picker'),15);load('/admin-login.js','admin');load('/home-polish.js','home');if('serviceWorker'in navigator){navigator.serviceWorker.ready.then(r=>r.active&&r.active.postMessage('CLEAR_AMIT_TOUCH_CACHES')).catch(()=>{});}}, {once:true});})();</script>`;
+  const runtime = `<script>(function(){const build='${build}',logo='${finalLogo}';function fixLogos(){document.querySelectorAll('img.logo,img.splash-logo,img.splash-brand-logo').forEach(i=>{if(i.getAttribute('src')!==logo)i.setAttribute('src',logo);});}function load(src,key){if(document.querySelector('script[data-amit="'+key+'"]'))return;const s=document.createElement('script');s.src=src+'?v='+build;s.dataset.amit=key;document.body.appendChild(s);}document.addEventListener('DOMContentLoaded',fixLogos,{once:true});window.addEventListener('load',()=>{fixLogos();load('/login-polish.js','login');load('/register-polish.js','register');load('/register-notice.js','register-notice');setTimeout(()=>load('/date-picker-polish.js','date-picker'),15);load('/admin-login.js','admin');load('/home-polish.js','home');if('serviceWorker'in navigator){navigator.serviceWorker.ready.then(r=>r.active&&r.active.postMessage('CLEAR_AMIT_TOUCH_CACHES')).catch(()=>{});}}, {once:true});})();</script>`;
   html = html.replace('</body>', runtime + '</body>');
 
   return isBuffer ? Buffer.from(html, 'utf8') : html;
