@@ -28,7 +28,7 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
   );
 
   const forceLogoScript = `<script>(function(){const u='${finalLogo}';function fix(){document.querySelectorAll('img.logo,img.splash-logo,img.splash-brand-logo').forEach(function(i){if(i.getAttribute('src')!==u)i.setAttribute('src',u);});}document.addEventListener('DOMContentLoaded',function(){fix();new MutationObserver(fix).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['src'],childList:true});});})();</script>`;
-  html = html.replace('</body>', forceLogoScript + '</body>');
+  html = html.replace('</body>', '<script src="/login-polish.js?v=20260815-1"></script>' + forceLogoScript + '</body>');
 
   return isBuffer ? Buffer.from(html, 'utf8') : html;
 };
