@@ -32,7 +32,7 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
   );
 
   const forceLogoScript = `<script>(function(){const u='${finalLogo}';function fix(){document.querySelectorAll('img.logo,img.splash-logo,img.splash-brand-logo').forEach(function(i){if(i.getAttribute('src')!==u)i.setAttribute('src',u);});}document.addEventListener('DOMContentLoaded',function(){fix();new MutationObserver(fix).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['src'],childList:true});});})();</script>`;
-  const lateLoginPolish = `<script>(function(){function loadLoginPolish(){if(document.querySelector('script[data-login-polish]'))return;const s=document.createElement('script');s.src='/login-polish.js?v=20260815-4';s.dataset.loginPolish='1';document.body.appendChild(s);}if(document.readyState==='complete')setTimeout(loadLoginPolish,0);else window.addEventListener('load',()=>setTimeout(loadLoginPolish,0),{once:true});})();</script>`;
+  const lateLoginPolish = `<script>(function(){function loadLoginPolish(){if(document.querySelector('script[data-login-polish]'))return;const s=document.createElement('script');s.src='/login-polish.js?v=20260815-5';s.dataset.loginPolish='1';document.body.appendChild(s);}if(document.readyState==='complete')setTimeout(loadLoginPolish,0);else window.addEventListener('load',()=>setTimeout(loadLoginPolish,0),{once:true});})();</script>`;
   html = html.replace('</body>', forceLogoScript + lateLoginPolish + '</body>');
 
   return isBuffer ? Buffer.from(html, 'utf8') : html;
