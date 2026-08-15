@@ -9,7 +9,7 @@
     #login .auth>*{flex:0 0 auto!important}
     #login .round{display:none!important}
     #login .spark{position:absolute!important;right:47px!important;top:10.1vh!important;color:#d99486!important;font-size:28px!important;line-height:1!important;font-weight:300!important}
-    #login .logo{display:block!important;width:min(292px,76vw)!important;max-width:none!important;height:auto!important;max-height:30vh!important;object-fit:contain!important;margin:8.5vh auto 0!important}
+    #login .logo{display:block!important;width:min(292px,76vw)!important;max-width:none!important;height:auto!important;max-height:30vh!important;object-fit:contain!important;margin:8.5vh auto 0!important;background:transparent!important}
     #login h1{margin:3.8vh 0 0!important;font-size:29px!important;line-height:1.1!important;font-weight:300!important;color:#34736d!important;letter-spacing:0!important}
     #login h1 .heart{display:inline-block!important;margin-right:4px!important;color:#d99486!important;font-size:31px!important;font-weight:300!important;vertical-align:-2px!important}
     #login p.subtitle{margin:12px 0 0!important;font-size:16px!important;line-height:1.25!important;font-weight:300!important;color:#4b7e79!important}
@@ -39,5 +39,5 @@
   document.head.appendChild(style);
 
   const logo=document.querySelector('#login img.logo');
-  if(logo) logo.src='/assets/Amit%20Touch_Logo.png?v=20260815-login-2';
+  if(logo) logo.src='/assets/amitouch_logo_vector.png?v=20260815-vector-final';
 })();
