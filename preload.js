@@ -9,7 +9,7 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
 
   const isBuffer = Buffer.isBuffer(result);
   let html = isBuffer ? result.toString('utf8') : String(result);
-  const finalLogo = '/assets/Amit%20Touch_Logo.png?v=20260815-uploaded';
+  const finalLogo = '/assets/amitouch_logo_vector.png?v=20260815-vector-final';
 
   html = html
     .replaceAll('/assets/amit-touch-logo.svg', finalLogo)
@@ -17,7 +17,11 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
     .replaceAll('/assets/amit-touch-logo.webp?v=20260815-final', finalLogo)
     .replaceAll('/assets/amit-touch-logo.webp', finalLogo)
     .replaceAll('/assets/amit-touch-logo.png', finalLogo)
-    .replaceAll('/assets/amit-touch-logo.jpg', finalLogo);
+    .replaceAll('/assets/amit-touch-logo.jpg', finalLogo)
+    .replaceAll('/assets/Amit%20Touch_Logo.png?v=20260815-uploaded', finalLogo)
+    .replaceAll('/assets/Amit%20Touch_Logo.png?v=20260815-login-2', finalLogo)
+    .replaceAll('/assets/Amit%20Touch_Logo.png?v=20260815-login', finalLogo)
+    .replaceAll('/assets/Amit%20Touch_Logo.png', finalLogo);
 
   const criticalSplash = `<style id="splash-critical">#splash{opacity:0!important;visibility:hidden!important}#splash.brand-ready{opacity:1!important;visibility:visible!important}#splash.brand-done{opacity:0!important;visibility:hidden!important}</style>`;
   html = html.replace('</head>', criticalSplash + '</head>');
@@ -28,7 +32,7 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
   );
 
   const forceLogoScript = `<script>(function(){const u='${finalLogo}';function fix(){document.querySelectorAll('img.logo,img.splash-logo,img.splash-brand-logo').forEach(function(i){if(i.getAttribute('src')!==u)i.setAttribute('src',u);});}document.addEventListener('DOMContentLoaded',function(){fix();new MutationObserver(fix).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['src'],childList:true});});})();</script>`;
-  const lateLoginPolish = `<script>(function(){function loadLoginPolish(){if(document.querySelector('script[data-login-polish]'))return;const s=document.createElement('script');s.src='/login-polish.js?v=20260815-3';s.dataset.loginPolish='1';document.body.appendChild(s);}if(document.readyState==='complete')setTimeout(loadLoginPolish,0);else window.addEventListener('load',()=>setTimeout(loadLoginPolish,0),{once:true});})();</script>`;
+  const lateLoginPolish = `<script>(function(){function loadLoginPolish(){if(document.querySelector('script[data-login-polish]'))return;const s=document.createElement('script');s.src='/login-polish.js?v=20260815-4';s.dataset.loginPolish='1';document.body.appendChild(s);}if(document.readyState==='complete')setTimeout(loadLoginPolish,0);else window.addEventListener('load',()=>setTimeout(loadLoginPolish,0),{once:true});})();</script>`;
   html = html.replace('</body>', forceLogoScript + lateLoginPolish + '</body>');
 
   return isBuffer ? Buffer.from(html, 'utf8') : html;
