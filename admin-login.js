@@ -1,27 +1,52 @@
 (function(){
   const ADMIN_NAME='עמית טל';
   const ADMIN_PHONE='0527467143';
+  const CODE_ICON="/assets/ChatGPT%20Image%20Aug%2015,%202026,%2008_39_48%20PM.png?v=20260815-admin-code";
   function cleanPhone(value){let p=String(value||'').replace(/\D/g,'');if(p.startsWith('972')&&p.length>=11)p='0'+p.slice(3);return p;}
   function cleanName(value){return String(value||'').replace(/\s+/g,' ').trim();}
-  function ensureStyle(){if(document.getElementById('admin-code-style'))return;const s=document.createElement('style');s.id='admin-code-style';s.textContent=`#adminCodeWrap .admin-code-icon{font-size:0!important;position:relative!important;background:none!important}#adminCodeWrap .admin-code-icon:before{content:'••••';font-size:13px!important;line-height:1!important;letter-spacing:2px!important;color:#2f716b!important;font-weight:500!important;display:block!important;transform:translateY(-1px)}#adminCodeWrap.admin-code-reveal{animation:adminCodeReveal .24s ease both}@keyframes adminCodeReveal{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}`;document.head.appendChild(s);}
+  function ensureStyle(){
+    if(document.getElementById('admin-code-style'))return;
+    const s=document.createElement('style');
+    s.id='admin-code-style';
+    s.textContent=`
+      #adminCodeWrap.admin-code-hidden{display:none!important}
+      #adminCodeWrap.admin-code-visible{display:flex!important}
+      #adminCodeWrap .admin-code-icon{font-size:0!important;background-image:url('${CODE_ICON}')!important;background-position:center!important;background-repeat:no-repeat!important;background-size:contain!important}
+      #adminCodeWrap.admin-code-reveal{animation:adminCodeReveal .24s ease both}
+      @keyframes adminCodeReveal{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+    `;
+    document.head.appendChild(s);
+  }
   function ensureField(){
-    const login=document.getElementById('login');
     const phoneWrap=document.getElementById('loginPhone')?.closest('.field-wrap');
-    if(!login||!phoneWrap)return null;
+    if(!phoneWrap)return null;
     let wrap=document.getElementById('adminCodeWrap');
     if(!wrap){
       wrap=document.createElement('div');
       wrap.id='adminCodeWrap';
-      wrap.className='glass field-wrap admin-code-wrap';
-      wrap.style.display='none';
+      wrap.className='glass field-wrap admin-code-wrap admin-code-hidden';
       wrap.innerHTML='<span class="field-icon admin-code-icon" aria-hidden="true"></span><input id="adminCode" class="field" inputmode="numeric" autocomplete="one-time-code" maxlength="4" placeholder="קוד מנהל">';
       phoneWrap.insertAdjacentElement('afterend',wrap);
     }
     return wrap;
   }
   function isAdminDetails(){return cleanName(document.getElementById('loginName')?.value)===ADMIN_NAME&&cleanPhone(document.getElementById('loginPhone')?.value)===ADMIN_PHONE;}
-  function hideField(){const wrap=ensureField();if(wrap)wrap.style.display='none';const code=document.getElementById('adminCode');if(code)code.value='';}
-  function revealField(){const wrap=ensureField();if(!wrap)return;wrap.style.display='flex';wrap.classList.remove('admin-code-reveal');void wrap.offsetWidth;wrap.classList.add('admin-code-reveal');setTimeout(()=>document.getElementById('adminCode')?.focus(),30);}
+  function isVisible(){return document.getElementById('adminCodeWrap')?.classList.contains('admin-code-visible');}
+  function hideField(){
+    const wrap=ensureField();
+    if(wrap){wrap.classList.remove('admin-code-visible','admin-code-reveal');wrap.classList.add('admin-code-hidden');}
+    const code=document.getElementById('adminCode');
+    if(code)code.value='';
+  }
+  function revealField(){
+    const wrap=ensureField();if(!wrap)return;
+    wrap.classList.remove('admin-code-hidden');
+    wrap.classList.add('admin-code-visible');
+    wrap.classList.remove('admin-code-reveal');
+    void wrap.offsetWidth;
+    wrap.classList.add('admin-code-reveal');
+    setTimeout(()=>document.getElementById('adminCode')?.focus(),30);
+  }
   function install(){
     const name=document.getElementById('loginName');
     const phone=document.getElementById('loginPhone');
@@ -34,8 +59,7 @@
       const fullName=cleanName(name.value);
       const clean=cleanPhone(phone.value);
       if(fullName!==ADMIN_NAME||clean!==ADMIN_PHONE){hideField();return originalLogin?.();}
-      const wrap=ensureField();
-      if(wrap&&wrap.style.display==='none'){revealField();return;}
+      if(!isVisible()){revealField();return;}
       const code=String(document.getElementById('adminCode')?.value||'').trim();
       if(!code){document.getElementById('adminCode')?.focus();return;}
       try{
