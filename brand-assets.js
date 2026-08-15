@@ -11,10 +11,11 @@
   splash.style.visibility='hidden';
 
   const splashLogo=splash.querySelector('img.splash-logo');
+  const logoUrl='/assets/amit-touch-logo.webp?v=20260815-final';
   if(splashLogo){
     splashLogo.classList.remove('splash-logo');
     splashLogo.classList.add('splash-brand-logo');
-    splashLogo.src='/assets/amit-touch-logo.svg?v=20260814-5';
+    splashLogo.src=logoUrl;
   }
 
   const guard=document.createElement('style');
@@ -27,7 +28,7 @@
   document.head.appendChild(guard);
 
   async function join(parts){
-    const texts=await Promise.all(parts.map(p=>fetch(p,{cache:'force-cache'}).then(r=>{if(!r.ok)throw new Error('asset '+p);return r.text();})));
+    const texts=await Promise.all(parts.map(p=>fetch(p,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('asset '+p);return r.text();})));
     return texts.join('').replace(/\s+/g,'');
   }
   function base64BlobUrl(b64,type){
@@ -45,8 +46,7 @@
 
     const imgUrl=base64BlobUrl(img64,'image/webp');
     const fontUrl=base64BlobUrl(font64,'font/woff2');
-    const logoUrl='/assets/amit-touch-logo.svg?v=20260814-5';
-    const heartUrl='/assets/amit-touch-heart.svg?v=20260814-5';
+    const heartUrl='/assets/amit-touch-heart.svg?v=20260815-final';
 
     await Promise.all([
       new Promise(resolve=>{const i=new Image();i.onload=i.onerror=resolve;i.src=logoUrl;}),
