@@ -8,14 +8,10 @@
     #register .auth{position:relative!important;width:100%!important;height:100dvh!important;max-width:430px!important;margin:0 auto!important;padding:0 28px calc(env(safe-area-inset-bottom) + 10px)!important;overflow:hidden!important;text-align:center!important;display:flex!important;flex-direction:column!important;align-items:center!important;background:#fbf6f1 url('/assets/ChatGPT%20Image%20Aug%2015,%202026,%2008_24_27%20PM.png?v=20260815-register-bg-3') center bottom/cover no-repeat!important}
     #register .auth>*{flex:0 0 auto!important;position:relative!important;z-index:1!important}
     #register .spark,#register [class*="spark"],#register .round{display:none!important}
-
-    /* Match login hero exactly */
     #register .logo{display:block!important;width:min(248px,66vw)!important;max-width:none!important;height:auto!important;max-height:24vh!important;object-fit:contain!important;margin:5.4vh auto 0!important;background:transparent!important}
     #register h1{display:flex!important;width:100%!important;align-items:center!important;justify-content:center!important;gap:7px!important;text-align:center!important;margin:2.2vh 0 0!important;font-size:27px!important;line-height:1.1!important;font-weight:200!important;color:#34736d!important;letter-spacing:0!important}
     #register h1 .heart{display:inline-flex!important;width:26px!important;height:26px!important;font-size:0!important;margin:0!important;background:url('/assets/amit-touch-heart.svg?v=20260815-heart') center/contain no-repeat!important;vertical-align:middle!important}
     #register p.subtitle{width:100%!important;text-align:center!important;margin:8px 0 0!important;font-size:15px!important;line-height:1.25!important;font-weight:200!important;color:#4b7e79!important}
-
-    /* Same field dimensions as login, then continue consistently */
     #register .field-wrap{position:relative!important;width:100%!important;height:58px!important;min-height:58px!important;margin:1.9vh 0 0!important;padding:0 18px!important;border-radius:16px!important;border:1px solid rgba(53,91,87,.15)!important;background:rgba(255,255,255,.16)!important;box-shadow:0 5px 16px rgba(72,55,44,.025)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;display:flex!important;align-items:center!important;flex-direction:row!important;gap:13px!important;overflow:hidden!important}
     #register .field-wrap + .field-wrap{margin-top:11px!important}
     #register .field-icon{display:block!important;width:30px!important;min-width:30px!important;height:30px!important;font-size:0!important;background-position:center!important;background-repeat:no-repeat!important;background-size:contain!important;color:transparent!important;z-index:2!important}
@@ -25,9 +21,10 @@
     #register .field{height:100%!important;width:100%!important;padding:20px 0 5px!important;border:0!important;background:transparent!important;outline:0!important;text-align:right!important;direction:rtl!important;font-size:16px!important;line-height:1.1!important;font-weight:300!important;color:#285f5a!important;z-index:2!important}
     #register .field::placeholder{color:#a9adac!important;opacity:1!important;font-weight:300!important}
     #register .field-label{position:absolute!important;right:61px!important;top:9px!important;font-size:11.5px!important;line-height:1!important;font-weight:400!important;color:#405d59!important;pointer-events:none!important;z-index:3!important}
-    #register .dob-wrap{cursor:pointer!important}
+    #register .dob-wrap{cursor:pointer!important;direction:rtl!important;justify-content:flex-start!important}
     #register .dob-wrap #regDob{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;opacity:0!important;z-index:6!important;cursor:pointer!important}
-    #register .dob-copy{width:100%!important;display:flex!important;flex-direction:column!important;align-items:flex-end!important;justify-content:center!important;text-align:right!important;direction:rtl!important;padding-top:2px!important;pointer-events:none!important;z-index:3!important}
+    #register .dob-copy{flex:1!important;min-width:0!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;text-align:right!important;direction:rtl!important;padding-top:2px!important;pointer-events:none!important;z-index:3!important}
+    #register .dob-copy b,#register .dob-copy span{width:100%!important;text-align:right!important;direction:rtl!important}
     #register .dob-copy b{font-size:11.5px!important;line-height:1.1!important;font-weight:400!important;color:#405d59!important;margin-bottom:7px!important}
     #register .dob-copy span{font-size:16px!important;line-height:1!important;font-weight:300!important;color:#a9adac!important}
     #register .dob-copy span.has-value{color:#285f5a!important}
@@ -38,71 +35,17 @@
     #register .secure:before{content:''!important;position:absolute!important;right:0!important;top:50%!important;transform:translateY(-50%)!important;width:17px!important;height:17px!important;background:url('/assets/%D7%9E%D7%A0%D7%A2%D7%95%D7%9C.png?v=20260815-lock') center/contain no-repeat!important}
     #register .auth-link{margin:1vh 0 0!important;font-size:12.5px!important;line-height:1.2!important;font-weight:300!important;color:#365f5b!important}
     #register .auth-link button{border:0!important;background:none!important;padding:0 4px!important;color:#2f716b!important;font-size:12.5px!important;font-weight:400!important;text-decoration:underline!important;text-underline-offset:5px!important}
-
-    /* Preserve the same visual system on shorter phones while keeping one-screen layout */
-    @media(max-height:820px){
-      #register .logo{width:min(225px,62vw)!important;margin-top:3.8vh!important;max-height:21vh!important}
-      #register h1{margin-top:1.6vh!important;font-size:24px!important}
-      #register p.subtitle{font-size:13.5px!important;margin-top:6px!important}
-      #register .field-wrap{height:52px!important;min-height:52px!important;margin-top:1.15vh!important}
-      #register .field-wrap + .field-wrap{margin-top:8px!important}
-      #register .field{font-size:14px!important;padding-top:18px!important}
-      #register .dob-copy span{font-size:14px!important}
-      #register .primary{height:50px!important;min-height:50px!important;line-height:50px!important;margin-top:1.2vh!important}
-      #register .divider{margin-top:1.1vh!important}
-      #register .secure{margin-top:.9vh!important;font-size:11.5px!important}
-      #register .auth-link{margin-top:.7vh!important;font-size:11.5px!important}
-    }
-    @media(max-height:700px){
-      #register .logo{width:min(205px,58vw)!important;margin-top:2.5vh!important;max-height:19vh!important}
-      #register h1{margin-top:1vh!important;font-size:22px!important}
-      #register p.subtitle{margin-top:4px!important;font-size:12.5px!important}
-      #register .field-wrap{height:47px!important;min-height:47px!important;margin-top:.7vh!important}
-      #register .field-wrap + .field-wrap{margin-top:6px!important}
-      #register .field-label,#register .dob-copy b{font-size:10px!important;top:6px!important}
-      #register .field{font-size:13px!important;padding-top:16px!important}
-      #register .dob-copy b{margin-bottom:4px!important}
-      #register .dob-copy span{font-size:13px!important}
-      #register .primary{height:47px!important;min-height:47px!important;line-height:47px!important;margin-top:.8vh!important}
-      #register .divider{margin-top:.7vh!important}
-      #register .secure{margin-top:.6vh!important;font-size:10.5px!important}
-      #register .auth-link{margin-top:.5vh!important;font-size:10.5px!important}
-    }
+    @media(max-height:820px){#register .logo{width:min(225px,62vw)!important;margin-top:3.8vh!important;max-height:21vh!important}#register h1{margin-top:1.6vh!important;font-size:24px!important}#register p.subtitle{font-size:13.5px!important;margin-top:6px!important}#register .field-wrap{height:52px!important;min-height:52px!important;margin-top:1.15vh!important}#register .field-wrap + .field-wrap{margin-top:8px!important}#register .field{font-size:14px!important;padding-top:18px!important}#register .dob-copy span{font-size:14px!important}#register .primary{height:50px!important;min-height:50px!important;line-height:50px!important;margin-top:1.2vh!important}#register .divider{margin-top:1.1vh!important}#register .secure{margin-top:.9vh!important;font-size:11.5px!important}#register .auth-link{margin-top:.7vh!important;font-size:11.5px!important}}
+    @media(max-height:700px){#register .logo{width:min(205px,58vw)!important;margin-top:2.5vh!important;max-height:19vh!important}#register h1{margin-top:1vh!important;font-size:22px!important}#register p.subtitle{margin-top:4px!important;font-size:12.5px!important}#register .field-wrap{height:47px!important;min-height:47px!important;margin-top:.7vh!important}#register .field-wrap + .field-wrap{margin-top:6px!important}#register .field-label,#register .dob-copy b{font-size:10px!important;top:6px!important}#register .field{font-size:13px!important;padding-top:16px!important}#register .dob-copy b{margin-bottom:4px!important}#register .dob-copy span{font-size:13px!important}#register .primary{height:47px!important;min-height:47px!important;line-height:47px!important;margin-top:.8vh!important}#register .divider{margin-top:.7vh!important}#register .secure{margin-top:.6vh!important;font-size:10.5px!important}#register .auth-link{margin-top:.5vh!important;font-size:10.5px!important}}
   `;
   document.head.appendChild(style);
-
   const register=document.getElementById('register'); if(!register)return;
   register.querySelectorAll('.spark,[class*="spark"],.round').forEach(el=>el.remove());
   const logo=register.querySelector('img.logo'); if(logo)logo.src='/assets/amitouch_logo_vector.png?v=20260815-vector-final';
   const heart=register.querySelector('h1 .heart'); if(heart)heart.textContent='';
-
-  const configs=[
-    ['regFirst','שם פרטי','הכניסי שם פרטי','/assets/%D7%90%D7%99%D7%A9.png?v=20260815-person'],
-    ['regLast','שם משפחה','הכניסי שם משפחה','/assets/%D7%90%D7%99%D7%A9.png?v=20260815-person'],
-    ['regPhone','נייד','הכניסי מספר טלפון','/assets/ChatGPT%20Image%20Aug%2014,%202026,%2003_25_24%20PM.png?v=20260815-phone']
-  ];
-  configs.forEach(([id,label,placeholder,iconUrl])=>{
-    const input=document.getElementById(id); if(!input)return;
-    const wrap=input.closest('.field-wrap'); if(!wrap)return;
-    const icon=wrap.querySelector('.field-icon'); if(icon){icon.textContent='';icon.style.backgroundImage=`url('${iconUrl}')`;}
-    input.placeholder=placeholder;
-    let l=wrap.querySelector('.field-label'); if(!l){l=document.createElement('span');l.className='field-label';wrap.appendChild(l);} l.textContent=label;
-  });
-
+  const configs=[['regFirst','שם פרטי','הכניסי שם פרטי','/assets/%D7%90%D7%99%D7%A9.png?v=20260815-person'],['regLast','שם משפחה','הכניסי שם משפחה','/assets/%D7%90%D7%99%D7%A9.png?v=20260815-person'],['regPhone','נייד','הכניסי מספר טלפון','/assets/ChatGPT%20Image%20Aug%2014,%202026,%2003_25_24%20PM.png?v=20260815-phone']];
+  configs.forEach(([id,label,placeholder,iconUrl])=>{const input=document.getElementById(id); if(!input)return;const wrap=input.closest('.field-wrap'); if(!wrap)return;const icon=wrap.querySelector('.field-icon'); if(icon){icon.textContent='';icon.style.backgroundImage=`url('${iconUrl}')`;}input.placeholder=placeholder;let l=wrap.querySelector('.field-label'); if(!l){l=document.createElement('span');l.className='field-label';wrap.appendChild(l);} l.textContent=label;});
   const dob=document.getElementById('regDob');
-  if(dob){
-    const wrap=dob.closest('.field-wrap');
-    if(wrap){
-      wrap.classList.add('dob-wrap');
-      const icon=wrap.querySelector('.field-icon'); if(icon){icon.textContent='';icon.style.backgroundImage="url('/assets/ChatGPT%20Image%20Aug%2015,%202026,%2008_20_45%20PM.png?v=20260815-calendar')";}
-      wrap.querySelector('.field-label')?.remove();
-      let copy=wrap.querySelector('.dob-copy');
-      if(!copy){copy=document.createElement('div');copy.className='dob-copy';copy.innerHTML='<b>תאריך לידה</b><span>בחרי תאריך לידה</span>';wrap.insertBefore(copy,dob);}
-      const text=copy.querySelector('span');
-      const refresh=()=>{if(!text)return;if(dob.value){const [y,m,d]=dob.value.split('-');text.textContent=`${d}.${m}.${y}`;text.classList.add('has-value');}else{text.textContent='בחרי תאריך לידה';text.classList.remove('has-value');}};
-      dob.addEventListener('change',refresh);dob.addEventListener('input',refresh);refresh();
-    }
-  }
-
+  if(dob){const wrap=dob.closest('.field-wrap');if(wrap){wrap.classList.add('dob-wrap');const icon=wrap.querySelector('.field-icon'); if(icon){icon.textContent='';icon.style.backgroundImage="url('/assets/ChatGPT%20Image%20Aug%2015,%202026,%2008_20_45%20PM.png?v=20260815-calendar')";}wrap.querySelector('.field-label')?.remove();let copy=wrap.querySelector('.dob-copy');if(!copy){copy=document.createElement('div');copy.className='dob-copy';copy.innerHTML='<b>תאריך לידה</b><span>בחרי תאריך לידה</span>';wrap.insertBefore(copy,dob);}const text=copy.querySelector('span');const refresh=()=>{if(!text)return;if(dob.value){const [y,m,d]=dob.value.split('-');text.textContent=`${d}.${m}.${y}`;text.classList.add('has-value');}else{text.textContent='בחרי תאריך לידה';text.classList.remove('has-value');}};dob.addEventListener('change',refresh);dob.addEventListener('input',refresh);refresh();}}
   const primary=register.querySelector('.primary'); if(primary)primary.textContent='הירשמי';
 })();
