@@ -9,7 +9,8 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
 
   const isBuffer = Buffer.isBuffer(result);
   let html = isBuffer ? result.toString('utf8') : String(result);
-  const finalLogo = '/assets/amitouch_logo_vector.png?v=20260815-vector-final';
+  const build = '20260815-2043';
+  const finalLogo = `/assets/amitouch_logo_vector.png?v=${build}`;
 
   html = html
     .replaceAll('/assets/amit-touch-logo.svg', finalLogo)
@@ -31,11 +32,8 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
     "/* splash timing is controlled exclusively by brand-assets.js */"
   );
 
-  const forceLogoScript = `<script>(function(){const u='${finalLogo}';function fix(){document.querySelectorAll('img.logo,img.splash-logo,img.splash-brand-logo').forEach(function(i){if(i.getAttribute('src')!==u)i.setAttribute('src',u);});}document.addEventListener('DOMContentLoaded',function(){fix();new MutationObserver(fix).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['src'],childList:true});});})();</script>`;
-  const lateLoginPolish = `<script>(function(){function loadLoginPolish(){if(document.querySelector('script[data-login-polish]'))return;const s=document.createElement('script');s.src='/login-polish.js?v=20260815-6';s.dataset.loginPolish='1';document.body.appendChild(s);}if(document.readyState==='complete')setTimeout(loadLoginPolish,0);else window.addEventListener('load',()=>setTimeout(loadLoginPolish,0),{once:true});})();</script>`;
-  const lateRegisterPolish = `<script>(function(){function loadRegisterPolish(){if(document.querySelector('script[data-register-polish]'))return;const s=document.createElement('script');s.src='/register-polish.js?v=20260815-3';s.dataset.registerPolish='1';document.body.appendChild(s);}if(document.readyState==='complete')setTimeout(loadRegisterPolish,5);else window.addEventListener('load',()=>setTimeout(loadRegisterPolish,5),{once:true});})();</script>`;
-  const lateAdminLogin = `<script>(function(){function loadAdminLogin(){if(document.querySelector('script[data-admin-login]'))return;const s=document.createElement('script');s.src='/admin-login.js?v=20260815-2';s.dataset.adminLogin='1';document.body.appendChild(s);}if(document.readyState==='complete')setTimeout(loadAdminLogin,25);else window.addEventListener('load',()=>setTimeout(loadAdminLogin,25),{once:true});})();</script>`;
-  html = html.replace('</body>', forceLogoScript + lateLoginPolish + lateRegisterPolish + lateAdminLogin + '</body>');
+  const runtime = `<script>(function(){const build='${build}',logo='${finalLogo}';function fixLogos(){document.querySelectorAll('img.logo,img.splash-logo,img.splash-brand-logo').forEach(i=>{if(i.getAttribute('src')!==logo)i.setAttribute('src',logo);});}function load(src,key){if(document.querySelector('script[data-amit="'+key+'"]'))return;const s=document.createElement('script');s.src=src+'?v='+build;s.dataset.amit=key;document.body.appendChild(s);}document.addEventListener('DOMContentLoaded',fixLogos,{once:true});window.addEventListener('load',()=>{fixLogos();load('/login-polish.js','login');load('/register-polish.js','register');load('/admin-login.js','admin');if('serviceWorker'in navigator){navigator.serviceWorker.ready.then(r=>r.active&&r.active.postMessage('CLEAR_AMIT_TOUCH_CACHES')).catch(()=>{});}}, {once:true});})();</script>`;
+  html = html.replace('</body>', runtime + '</body>');
 
   return isBuffer ? Buffer.from(html, 'utf8') : html;
 };
