@@ -11,7 +11,7 @@
   splash.style.visibility='hidden';
 
   const splashLogo=splash.querySelector('img.splash-logo');
-  const logoUrl='/assets/amit-touch-logo.webp?v=20260815-final';
+  const logoUrl='/assets/Amit%20Touch_Logo.png?v=20260815-uploaded';
   if(splashLogo){
     splashLogo.classList.remove('splash-logo');
     splashLogo.classList.add('splash-brand-logo');
