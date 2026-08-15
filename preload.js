@@ -9,7 +9,7 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
 
   const isBuffer = Buffer.isBuffer(result);
   let html = isBuffer ? result.toString('utf8') : String(result);
-  const build = '20260815-2212';
+  const build = '20260815-2230';
   const finalLogo = `/assets/amitouch_logo_vector.png?v=${build}`;
 
   html = html
@@ -32,7 +32,7 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
     "/* splash timing is controlled exclusively by brand-assets.js */"
   );
 
-  const runtime = `<script>(function(){const build='${build}',logo='${finalLogo}';function fixLogos(){document.querySelectorAll('img.logo,img.splash-logo,img.splash-brand-logo').forEach(i=>{if(i.getAttribute('src')!==logo)i.setAttribute('src',logo);});}function load(src,key){if(document.querySelector('script[data-amit="'+key+'"]'))return;const s=document.createElement('script');s.src=src+'?v='+build;s.dataset.amit=key;document.body.appendChild(s);}document.addEventListener('DOMContentLoaded',fixLogos,{once:true});window.addEventListener('load',()=>{fixLogos();load('/login-polish.js','login');load('/register-polish.js','register');load('/register-notice.js','register-notice');setTimeout(()=>load('/date-picker-polish.js','date-picker'),15);load('/admin-login.js','admin');load('/home-polish.js','home');if('serviceWorker'in navigator){navigator.serviceWorker.ready.then(r=>r.active&&r.active.postMessage('CLEAR_AMIT_TOUCH_CACHES')).catch(()=>{});}}, {once:true});})();</script>`;
+  const runtime = `<script>(function(){const build='${build}',logo='${finalLogo}';function fixLogos(){document.querySelectorAll('img.logo,img.splash-logo,img.splash-brand-logo').forEach(i=>{if(i.getAttribute('src')!==logo)i.setAttribute('src',logo);});}function load(src,key){if(document.querySelector('script[data-amit="'+key+'"]'))return;const s=document.createElement('script');s.src=src+'?v='+build;s.dataset.amit=key;s.async=false;document.body.appendChild(s);}async function clearOld(){try{if('caches'in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)));}if('serviceWorker'in navigator){const regs=await navigator.serviceWorker.getRegistrations();for(const r of regs){r.active&&r.active.postMessage('CLEAR_AMIT_TOUCH_CACHES');}}}catch(_){}}function boot(){fixLogos();load('/login-polish.js','login');load('/register-polish.js','register');load('/register-notice.js','register-notice');load('/date-picker-polish.js','date-picker');load('/admin-login.js','admin');load('/home-polish.js','home');clearOld();const u=new URL(location.href);if(u.searchParams.get('ui')!==build&&!sessionStorage.getItem('amit-ui-'+build)){sessionStorage.setItem('amit-ui-'+build,'1');u.searchParams.set('ui',build);setTimeout(()=>location.replace(u.toString()),80);}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();})();</script>`;
   html = html.replace('</body>', runtime + '</body>');
 
   return isBuffer ? Buffer.from(html, 'utf8') : html;
