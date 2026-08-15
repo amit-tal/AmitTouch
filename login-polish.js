@@ -27,6 +27,14 @@
     #login .secure:before{content:''!important;position:absolute!important;right:0!important;top:50%!important;transform:translateY(-50%)!important;width:17px!important;height:17px!important;background:url('/assets/%D7%9E%D7%A0%D7%A2%D7%95%D7%9C.png?v=20260815-icons') center/contain no-repeat!important}
     #login .auth-link{margin:1.4vh 0 0!important;font-size:12.5px!important;line-height:1.2!important;font-weight:300!important;color:#365f5b!important}
     #login .auth-link button{border:0!important;background:none!important;padding:0 4px!important;color:#2f716b!important;font-size:12.5px!important;font-weight:400!important;text-decoration:underline!important;text-underline-offset:5px!important}
+    #amitLoginNotice{position:fixed!important;inset:0!important;z-index:120!important;display:none!important;place-items:center!important;padding:24px!important;background:rgba(38,70,66,.12)!important;backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important}
+    #amitLoginNotice.show{display:grid!important;animation:amitNoticeFade .22s ease both!important}
+    #amitLoginNotice .notice-glass{width:min(340px,calc(100vw - 48px))!important;padding:24px 22px 20px!important;border-radius:28px!important;text-align:center!important;direction:rtl!important;background:linear-gradient(145deg,rgba(255,255,255,.72),rgba(255,248,244,.40))!important;border:1px solid rgba(255,255,255,.82)!important;box-shadow:0 18px 55px rgba(47,113,107,.16),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.22)!important;backdrop-filter:blur(30px) saturate(155%)!important;-webkit-backdrop-filter:blur(30px) saturate(155%)!important;animation:amitNoticePop .28s cubic-bezier(.2,.8,.2,1) both!important}
+    #amitLoginNotice .notice-heart{width:34px!important;height:34px!important;margin:0 auto 10px!important;background:url('/assets/amit-touch-heart.svg?v=20260815-heart') center/contain no-repeat!important}
+    #amitLoginNotice h3{margin:0!important;font-size:21px!important;line-height:1.2!important;font-weight:300!important;color:#2f716b!important}
+    #amitLoginNotice p{margin:9px 0 18px!important;font-size:14px!important;line-height:1.55!important;font-weight:300!important;color:#527873!important}
+    #amitLoginNotice button{width:100%!important;height:46px!important;border:0!important;border-radius:15px!important;background:linear-gradient(90deg,#2c655f,#397970)!important;color:white!important;font-size:15px!important;font-weight:300!important;box-shadow:0 8px 20px rgba(47,113,107,.16)!important}
+    @keyframes amitNoticeFade{from{opacity:0}to{opacity:1}}@keyframes amitNoticePop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
     @media(max-height:820px){#login .logo{width:min(225px,62vw)!important;margin-top:3.8vh!important;max-height:21vh!important}#login h1{margin-top:1.6vh!important;font-size:24px!important}#login p.subtitle{font-size:13.5px!important;margin-top:6px!important}#login .field-wrap{height:52px!important;min-height:52px!important;margin-top:1.9vh!important}#login .field-wrap + .field-wrap{margin-top:9px!important}#login .primary{height:50px!important;min-height:50px!important;line-height:50px!important;margin-top:1.9vh!important}#login .divider{margin-top:1.8vh!important}#login .secure{margin-top:1.4vh!important;font-size:11.5px!important}#login .auth-link{margin-top:1vh!important;font-size:11.5px!important}}
     @media(max-height:700px){#login .logo{width:min(205px,58vw)!important;margin-top:2.5vh!important;max-height:19vh!important}#login h1{margin-top:1vh!important;font-size:22px!important}#login p.subtitle{margin-top:4px!important;font-size:12.5px!important}#login .field-wrap{height:48px!important;min-height:48px!important;margin-top:1.2vh!important}#login .field-wrap + .field-wrap{margin-top:7px!important}#login .primary{height:47px!important;min-height:47px!important;line-height:47px!important;margin-top:1.2vh!important}#login .divider{margin-top:1.1vh!important}#login .secure{margin-top:1vh!important}#login .auth-link{margin-top:.8vh!important}}
   `;
@@ -39,4 +47,26 @@
   if(loginPhone) loginPhone.placeholder='מספר טלפון';
   const secure=document.querySelector('#login .secure');
   if(secure) secure.textContent='הפרטים שלך נשמרים בצורה מאובטחת';
+
+  let notice=document.getElementById('amitLoginNotice');
+  if(!notice){
+    notice=document.createElement('div');
+    notice.id='amitLoginNotice';
+    notice.innerHTML='<div class="notice-glass" role="dialog" aria-modal="true" aria-labelledby="amitLoginNoticeTitle"><div class="notice-heart" aria-hidden="true"></div><h3 id="amitLoginNoticeTitle">כמעט שם</h3><p>כדי להמשיך, מלאי שם מלא ומספר טלפון.</p><button type="button">הבנתי</button></div>';
+    document.body.appendChild(notice);
+    notice.querySelector('button').addEventListener('click',()=>notice.classList.remove('show'));
+    notice.addEventListener('click',e=>{if(e.target===notice)notice.classList.remove('show');});
+  }
+
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest('#login .primary');
+    if(!btn)return;
+    const name=(document.getElementById('loginName')?.value||'').trim();
+    const phone=(document.getElementById('loginPhone')?.value||'').trim();
+    if(name&&phone)return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    notice.classList.add('show');
+  },true);
 })();
