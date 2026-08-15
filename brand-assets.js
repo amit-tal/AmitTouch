@@ -11,7 +11,7 @@
   splash.style.visibility='hidden';
 
   const splashLogo=splash.querySelector('img.splash-logo');
-  const logoUrl='/assets/Amit%20Touch_Logo.png?v=20260815-uploaded';
+  const logoUrl='/assets/amitouch_logo_vector.png?v=20260815-vector-final';
   if(splashLogo){
     splashLogo.classList.remove('splash-logo');
     splashLogo.classList.add('splash-brand-logo');
@@ -54,8 +54,7 @@
       new Promise(resolve=>{const i=new Image();i.onload=i.onerror=resolve;i.src=imgUrl;})
     ]);
 
-    document.querySelectorAll('img.logo').forEach(el=>{el.src=logoUrl;});
-    if(splashLogo)splashLogo.src=logoUrl;
+    document.querySelectorAll('img.logo,img.splash-logo,img.splash-brand-logo').forEach(el=>{el.src=logoUrl;});
 
     const oldHeart=splash.querySelector('.splash-heart');
     if(oldHeart){
@@ -79,7 +78,7 @@
       body *::before,body *::after{font-family:var(--ui-font)!important}
       #splash{background:#fbf5ef url('${imgUrl}') center/cover no-repeat!important;transition:opacity .5s ease,visibility .5s ease!important}
       #splash .splash-inner{width:min(430px,100%)!important;height:100%!important;padding:0 22px!important;display:flex!important;flex-direction:column!important;align-items:center!important;position:relative!important;text-align:center!important}
-      #splash .splash-brand-logo{display:block!important;width:min(335px,84vw)!important;max-height:43vh!important;object-fit:contain!important;margin:12.5vh auto 0!important;flex:0 0 auto!important}
+      #splash .splash-brand-logo{display:block!important;width:min(335px,84vw)!important;max-height:43vh!important;object-fit:contain!important;margin:12.5vh auto 0!important;flex:0 0 auto!important;background:transparent!important}
       #splash .splash-tag{display:block!important;font-family:var(--hand)!important;font-size:25px!important;line-height:1.55!important;color:#285f5a!important;margin:36px 0 0!important;letter-spacing:0!important;font-weight:100!important;direction:rtl!important}
       #splash .splash-heart{display:block!important;width:42px!important;height:42px!important;margin:20px auto 0!important;line-height:1!important}
       #splash .splash-heart-image{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important}
