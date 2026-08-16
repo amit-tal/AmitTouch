@@ -1,7 +1,7 @@
 (function(){
   const home=document.getElementById('home');
   if(!home)return;
-  const BUILD='20260816-home-hero-real-img-v12';
+  const BUILD='20260816-home-hero-user-v13';
   document.getElementById('amit-home-hero-reference')?.remove();
   const style=document.createElement('style');
   style.id='amit-home-hero-reference';
@@ -35,11 +35,8 @@
     if(!photo)return;
     let art=photo.querySelector('.home-hero-art');
     if(!art){art=document.createElement('img');art.className='home-hero-art';art.alt='';photo.prepend(art);}
-    if(!art.dataset.ready){
-      art.dataset.ready='1';
-      art.onerror=function(){if(!this.dataset.fallback){this.dataset.fallback='1';this.src='/assets/home-hero-final.webp?v='+BUILD;}};
-    }
-    art.src='/assets/home-hero-transparent.webp?v='+BUILD;
+    art.onerror=function(){if(!this.dataset.fallback){this.dataset.fallback='1';this.src='/assets/home-hero-transparent.webp?v='+BUILD;}};
+    art.src='/assets/home-hero-user-v2.webp?v='+BUILD;
   }
   function refresh(){
     ensureHeroImage();
