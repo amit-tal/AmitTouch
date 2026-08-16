@@ -1,5 +1,5 @@
 (function(){
-  const BUILD='20260816-bottom-nav-v1';
+  const BUILD='20260816-bottom-nav-thin-v2';
   const screens=['bookings','services','home','about','profile'];
   const labels=['זימון תור','השירותים שלי','בית','אודות','הגדרות ופרטי משתמש'];
 
@@ -7,17 +7,17 @@
   const style=document.createElement('style');
   style.id='amit-bottom-nav-style';
   style.textContent=`
-    #amitBottomNav{position:fixed!important;z-index:90!important;left:50%!important;transform:translateX(-50%)!important;bottom:max(10px,env(safe-area-inset-bottom))!important;width:min(404px,calc(100vw - 20px))!important;height:82px!important;display:grid!important;grid-template-columns:repeat(5,1fr)!important;align-items:center!important;padding:6px 11px!important;border-radius:42px!important;border:1.5px solid rgba(255,255,255,.94)!important;background:linear-gradient(110deg,rgba(255,255,255,.54),rgba(249,232,228,.48),rgba(255,255,255,.48))!important;box-shadow:0 14px 34px rgba(188,116,105,.18),inset 0 1px 1px rgba(255,255,255,.98),inset 0 -1px 0 rgba(255,255,255,.32),inset 0 0 30px rgba(255,255,255,.26)!important;backdrop-filter:blur(24px) saturate(145%)!important;-webkit-backdrop-filter:blur(24px) saturate(145%)!important;direction:rtl!important;overflow:visible!important}
+    #amitBottomNav{position:fixed!important;z-index:90!important;left:50%!important;transform:translateX(-50%)!important;bottom:max(8px,env(safe-area-inset-bottom))!important;width:min(392px,calc(100vw - 28px))!important;height:62px!important;display:grid!important;grid-template-columns:repeat(5,1fr)!important;align-items:center!important;padding:3px 10px!important;border-radius:32px!important;border:1.2px solid rgba(255,255,255,.94)!important;background:linear-gradient(110deg,rgba(255,255,255,.57),rgba(249,232,228,.47),rgba(255,255,255,.50))!important;box-shadow:0 9px 24px rgba(188,116,105,.15),inset 0 1px 1px rgba(255,255,255,.98),inset 0 -1px 0 rgba(255,255,255,.30),inset 0 0 22px rgba(255,255,255,.24)!important;backdrop-filter:blur(22px) saturate(145%)!important;-webkit-backdrop-filter:blur(22px) saturate(145%)!important;direction:rtl!important;overflow:visible!important}
     #amitBottomNav[hidden]{display:none!important}
-    #amitBottomNav button{position:relative!important;height:66px!important;border:0!important;background:transparent!important;padding:0!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#175d56!important;overflow:visible!important}
-    #amitBottomNav button:after{content:''!important;position:absolute!important;left:50%!important;transform:translateX(-50%)!important;bottom:1px!important;width:10px!important;height:10px!important;border-radius:50%!important;background:rgba(116,143,138,.47)!important;transition:.2s ease!important}
-    #amitBottomNav .nav-icon{display:block!important;width:39px!important;height:39px!important;object-fit:contain!important;filter:none!important;opacity:.98!important;transition:transform .22s ease!important}
-    #amitBottomNav .nav-inline{width:39px!important;height:39px!important;color:#175d56!important}
+    #amitBottomNav button{position:relative!important;height:54px!important;border:0!important;background:transparent!important;padding:0!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#175d56!important;overflow:visible!important}
+    #amitBottomNav button:after{content:''!important;position:absolute!important;left:50%!important;transform:translateX(-50%)!important;bottom:1px!important;width:7px!important;height:7px!important;border-radius:50%!important;background:rgba(116,143,138,.42)!important;transition:.2s ease!important}
+    #amitBottomNav .nav-icon{display:block!important;width:31px!important;height:31px!important;object-fit:contain!important;filter:none!important;opacity:.98!important;transition:transform .22s ease!important}
+    #amitBottomNav .nav-inline{width:31px!important;height:31px!important;color:#175d56!important}
     #amitBottomNav button.active{z-index:2!important}
-    #amitBottomNav button.active:before{content:''!important;position:absolute!important;width:72px!important;height:72px!important;top:-15px!important;left:50%!important;transform:translateX(-50%)!important;border-radius:50%!important;border:1.5px solid rgba(255,255,255,.95)!important;background:radial-gradient(circle at 42% 30%,rgba(255,255,255,.75),rgba(249,198,192,.72) 46%,rgba(238,173,167,.52) 100%)!important;box-shadow:0 9px 22px rgba(203,116,106,.20),inset 0 1px 0 rgba(255,255,255,.98),inset 0 0 22px rgba(255,255,255,.35)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
-    #amitBottomNav button.active:after{width:39px!important;height:8px!important;border-radius:8px!important;bottom:-4px!important;background:#e88f89!important;box-shadow:0 3px 9px rgba(232,143,137,.22)!important}
-    #amitBottomNav button.active .nav-icon,#amitBottomNav button.active .nav-inline{position:relative!important;z-index:2!important;transform:translateY(-8px) scale(1.08)!important}
-    .screen.active{padding-bottom:96px!important}
+    #amitBottomNav button.active:before{content:''!important;position:absolute!important;width:60px!important;height:60px!important;top:-12px!important;left:50%!important;transform:translateX(-50%)!important;border-radius:50%!important;border:1.2px solid rgba(255,255,255,.95)!important;background:radial-gradient(circle at 42% 30%,rgba(255,255,255,.78),rgba(249,198,192,.70) 48%,rgba(238,173,167,.50) 100%)!important;box-shadow:0 7px 18px rgba(203,116,106,.18),inset 0 1px 0 rgba(255,255,255,.98),inset 0 0 18px rgba(255,255,255,.34)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
+    #amitBottomNav button.active:after{width:31px!important;height:5px!important;border-radius:6px!important;bottom:-3px!important;background:#e88f89!important;box-shadow:0 2px 7px rgba(232,143,137,.20)!important}
+    #amitBottomNav button.active .nav-icon,#amitBottomNav button.active .nav-inline{position:relative!important;z-index:2!important;transform:translateY(-6px) scale(1.06)!important}
+    .screen.active{padding-bottom:76px!important}
   `;
   document.head.appendChild(style);
 
