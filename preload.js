@@ -9,7 +9,7 @@ fs.readFileSync = function patchedReadFileSync(path, ...args) {
 
   const isBuffer = Buffer.isBuffer(result);
   let html = isBuffer ? result.toString('utf8') : String(result);
-  const build = '20260816-0840-home-login-guard-v4';
+  const build = '20260816-0900-home-reference-v2';
   const finalLogo = `/assets/amitouch_logo_vector.png?v=${build}`;
 
   html = html
