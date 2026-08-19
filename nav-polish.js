@@ -1,8 +1,12 @@
 (function(){
- const BUILD='20260819-bottom-nav-raised-contained-glass-v16';
- const screens=['bookings','services','home','about','profile'];
- const labels=['זימון תור','השירותים שלי','בית','אודות','הגדרות ופרטי משתמש'];
- const icons=['/assets/%D7%96%D7%99%D7%9E%D7%95%D7%9F%20%D7%AA%D7%95%D7%A8.png','/assets/%D7%92%D7%9C%D7%A8%D7%99%D7%99%D7%94.png','/assets/%D7%91%D7%99%D7%AA.png','/assets/%D7%90%D7%95%D7%93%D7%95%D7%AA.png','/assets/%D7%9E%D7%A9%D7%AA%D7%9E%D7%A9.png'];
+ const BUILD='20260819-bottom-nav-routes-v17';
+ const items=[
+  {target:'bookings',label:'זימון תור',icon:'/assets/%D7%96%D7%99%D7%9E%D7%95%D7%9F%20%D7%AA%D7%95%D7%A8.png'},
+  {target:'gallery',label:'גלריית עבודות',icon:'/assets/%D7%92%D7%9C%D7%A8%D7%99%D7%99%D7%94.png'},
+  {target:'home',label:'בית',icon:'/assets/%D7%91%D7%99%D7%AA.png'},
+  {target:'about',label:'אודות',icon:'/assets/%D7%90%D7%95%D7%93%D7%95%D7%AA.png'},
+  {target:'profile',label:'פרופיל',icon:'/assets/%D7%9E%D7%A9%D7%AA%D7%9E%D7%A9.png'}
+ ];
  document.getElementById('amit-bottom-nav-style')?.remove();
  const style=document.createElement('style');style.id='amit-bottom-nav-style';style.textContent=`
  #amitBottomNav{position:fixed!important;z-index:90!important;left:50%!important;transform:translateX(-50%)!important;bottom:max(16px,calc(env(safe-area-inset-bottom) + 8px))!important;width:min(382px,calc(100vw - 30px))!important;height:56px!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:center!important;padding:2px 8px!important;border-radius:30px!important;border:1px solid rgba(255,255,255,.94)!important;background:linear-gradient(110deg,rgba(255,255,255,.58),rgba(249,232,228,.48),rgba(255,255,255,.52))!important;box-shadow:0 10px 24px rgba(188,116,105,.14),inset 0 1px 1px rgba(255,255,255,.98)!important;backdrop-filter:blur(24px) saturate(150%)!important;-webkit-backdrop-filter:blur(24px) saturate(150%)!important;direction:rtl!important;overflow:visible!important}
@@ -20,19 +24,14 @@
  document.getElementById('amitBottomNav')?.remove();
  const nav=document.createElement('nav');nav.id='amitBottomNav';nav.setAttribute('aria-label','ניווט ראשי');
  const bubble=document.createElement('span');bubble.className='nav-glass-indicator';nav.appendChild(bubble);
- screens.forEach((target,i)=>{const b=document.createElement('button');b.type='button';b.dataset.target=target;b.setAttribute('aria-label',labels[i]);b.innerHTML=`<img class="nav-icon" src="${icons[i]}?v=${BUILD}" alt="">`;b.onclick=()=>{if(typeof window.show==='function')window.show(target);requestAnimationFrame(()=>requestAnimationFrame(sync));};nav.appendChild(b)});
+ items.forEach(item=>{const b=document.createElement('button');b.type='button';b.dataset.target=item.target;b.setAttribute('aria-label',item.label);b.innerHTML=`<img class="nav-icon" src="${item.icon}?v=${BUILD}" alt="">`;b.onclick=()=>{if(document.getElementById(item.target)&&typeof window.show==='function')window.show(item.target);requestAnimationFrame(()=>requestAnimationFrame(sync));};nav.appendChild(b)});
  document.body.appendChild(nav);
  function sync(){
    const id=document.querySelector('.screen.active')?.id||'';nav.hidden=!id||id==='login'||id==='register';
    const buttons=[...nav.querySelectorAll('button')];
    buttons.forEach(b=>b.classList.toggle('active',b.dataset.target===id));
    const active=buttons.find(b=>b.dataset.target===id);
-   if(active&&!nav.hidden){
-     const navRect=nav.getBoundingClientRect();
-     const activeRect=active.getBoundingClientRect();
-     const center=activeRect.left-navRect.left+(activeRect.width/2);
-     nav.style.setProperty('--bubble-x',`${center-26}px`);
-   }
+   if(active&&!nav.hidden){const navRect=nav.getBoundingClientRect(),activeRect=active.getBoundingClientRect(),center=activeRect.left-navRect.left+(activeRect.width/2);nav.style.setProperty('--bubble-x',`${center-26}px`);}
  }
  requestAnimationFrame(()=>requestAnimationFrame(sync));
  addEventListener('resize',()=>requestAnimationFrame(sync),{passive:true});
