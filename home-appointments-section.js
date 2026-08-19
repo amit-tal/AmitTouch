@@ -1,11 +1,11 @@
 (function(){
  const home=document.getElementById('home');if(!home)return;
- const BUILD='20260819-home-appointments-dividers-v3';
+ const BUILD='20260819-home-appointments-clean-v4';
  document.getElementById('amit-home-appointments-style')?.remove();
  const style=document.createElement('style');style.id='amit-home-appointments-style';style.textContent=`
- #home .appointments-stack{margin:4px 0 22px!important;display:flex!important;flex-direction:column!important;gap:18px!important}
- #home .appointment-block{margin:0!important}
- #home .appointment-heading{display:flex!important;align-items:center!important;justify-content:center!important;gap:14px!important;margin:0 0 12px!important;color:#07584f!important;font-family:Inter,sans-serif!important;font-size:18px!important;font-weight:500!important;line-height:1.2!important;text-align:center!important}
+ #home .appointments-stack{margin:4px 0 22px!important;display:flex!important;flex-direction:column!important;gap:18px!important;background:transparent!important;box-shadow:none!important;border:0!important}
+ #home .appointment-block{margin:0!important;background:transparent!important;box-shadow:none!important;border:0!important}
+ #home .appointment-heading{display:flex!important;align-items:center!important;justify-content:center!important;gap:14px!important;margin:0 0 12px!important;color:#07584f!important;font-family:Inter,sans-serif!important;font-size:18px!important;font-weight:500!important;line-height:1.2!important;text-align:center!important;background:transparent!important;box-shadow:none!important;border:0!important}
  #home .appointment-heading:before,#home .appointment-heading:after{content:''!important;height:1px!important;flex:1!important;background:linear-gradient(90deg,transparent 0%,rgba(7,88,79,.22) 28%,rgba(7,88,79,.72) 100%)!important}
  #home .appointment-heading:after{transform:scaleX(-1)!important}
  #home .appointment-card{display:grid!important;grid-template-columns:54px minmax(0,1fr) 82px!important;align-items:center!important;gap:14px!important;min-height:112px!important;padding:16px 18px!important;border-radius:22px!important;border:1px solid rgba(255,255,255,.9)!important;background:linear-gradient(145deg,rgba(255,255,255,.74),rgba(255,250,247,.58))!important;box-shadow:0 10px 24px rgba(93,63,52,.08),inset 0 1px 0 rgba(255,255,255,.98)!important;backdrop-filter:blur(20px) saturate(145%)!important;-webkit-backdrop-filter:blur(20px) saturate(145%)!important;direction:ltr!important}
