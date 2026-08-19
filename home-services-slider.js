@@ -1,5 +1,5 @@
 (function(){
-  const BUILD='20260819-home-services-slider-v1';
+  const BUILD='20260819-home-services-slider-icons-v2';
   const home=document.getElementById('home');
   if(!home)return;
   const grid=home.querySelector('.quick-grid');
@@ -13,17 +13,17 @@
     #home .quick-grid{display:flex!important;direction:rtl!important;gap:12px!important;margin:0 -15px 28px!important;padding:0 15px 8px!important;overflow-x:auto!important;overflow-y:visible!important;scroll-snap-type:x mandatory!important;scroll-padding-inline:15px!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-inline:contain!important;touch-action:pan-x pan-y!important;scrollbar-width:none!important}
     #home .quick-grid::-webkit-scrollbar{display:none!important}
     #home .quick{flex:0 0 122px!important;width:122px!important;height:154px!important;min-height:154px!important;padding:14px 8px 12px!important;border-radius:18px!important;border:1px solid rgba(255,255,255,.94)!important;background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(255,248,245,.52))!important;box-shadow:0 10px 22px rgba(112,76,66,.08),inset 0 1px 0 rgba(255,255,255,.98)!important;backdrop-filter:blur(18px) saturate(140%)!important;-webkit-backdrop-filter:blur(18px) saturate(140%)!important;color:#07584f!important;scroll-snap-align:start!important;scroll-snap-stop:always!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:space-between!important}
-    #home .quick .service-art{display:block!important;width:76px!important;height:92px!important;margin:0 auto 5px!important;background-position:center!important;background-repeat:no-repeat!important;background-size:contain!important;flex:0 0 auto!important}
+    #home .quick .service-art{display:block!important;width:82px!important;height:96px!important;margin:0 auto 5px!important;object-fit:contain!important;object-position:center!important;flex:0 0 auto!important}
     #home .quick b{display:block!important;margin:0!important;font-family:Inter,sans-serif!important;font-size:14px!important;line-height:1.25!important;font-weight:400!important;color:#07584f!important;text-align:center!important;white-space:nowrap!important}
   `;
   document.head.appendChild(style);
 
   const services=[
-    {label:'מניקור ג׳ל',icon:'/assets/home-service-gel.svg'},
-    {label:'בניה',icon:'/assets/home-service-manicure.svg'},
-    {label:'מילוי',icon:'/assets/home-service-pedicure.svg'},
-    {label:'תיקון',icon:'/assets/home-service-design.svg'},
-    {label:'הסרה',icon:'/assets/home-service-manicure.svg'}
+    {label:'מניקור ג׳ל',icon:'/assets/%D7%9E%D7%A0%D7%99%D7%A7%D7%95%D7%A8%20%D7%92%D7%9C.png'},
+    {label:'בניה',icon:'/assets/%D7%91%D7%A0%D7%99%D7%99%D7%94.png'},
+    {label:'מילוי',icon:'/assets/%D7%9E%D7%99%D7%9C%D7%95%D7%99.png'},
+    {label:'תיקון',icon:'/assets/%D7%94%D7%A9%D7%9C%D7%9E%D7%94.png'},
+    {label:'הסרה',icon:'/assets/%D7%94%D7%A1%D7%A8%D7%94.png'}
   ];
 
   grid.innerHTML='';
@@ -32,7 +32,7 @@
     btn.type='button';
     btn.className='quick glass';
     btn.setAttribute('aria-label',service.label);
-    btn.innerHTML=`<span class="service-art" style="background-image:url('${service.icon}?v=${BUILD}')"></span><b>${service.label}</b>`;
+    btn.innerHTML=`<img class="service-art" src="${service.icon}?v=${BUILD}" alt=""><b>${service.label}</b>`;
     btn.addEventListener('click',()=>{if(typeof window.show==='function')window.show('services');});
     grid.appendChild(btn);
   });
