@@ -2,7 +2,10 @@
   function apply(){
     const tag=document.querySelector('#splash .splash-tag');
     if(!tag)return;
-    tag.innerHTML='<span class="splash-tag-line">הטאץ׳ הקטן שעושה</span><span class="splash-tag-line">את כל ההבדל</span>';
+    const ok=tag.children.length===2&&tag.children[0]?.textContent==='הטאץ׳ הקטן שעושה'&&tag.children[1]?.textContent==='את כל ההבדל';
+    if(!ok){
+      tag.innerHTML='<span class="splash-tag-line">הטאץ׳ הקטן שעושה</span><span class="splash-tag-line">את כל ההבדל</span>';
+    }
     tag.style.setProperty('display','flex','important');
     tag.style.setProperty('flex-direction','column','important');
     tag.style.setProperty('align-items','center','important');
@@ -16,10 +19,6 @@
     });
   }
   apply();
-  const splash=document.getElementById('splash');
-  if(splash){
-    const mo=new MutationObserver(()=>apply());
-    mo.observe(splash,{childList:true,subtree:true,characterData:true});
-    setTimeout(()=>mo.disconnect(),5000);
-  }
+  setTimeout(apply,120);
+  setTimeout(apply,500);
 })();
