@@ -1,18 +1,31 @@
 (function(){
-  const KEY='amit-touch-signed-in-customer-v1';
+  const KEY='amit-touch-signed-in-customer-v2';
+  const LEGACY_KEY='amit-touch-signed-in-customer-v1';
+  const DB_NAME='amit-touch-device-session';
+  const STORE='session';
+  let explicitLogout=false;
   function currentUser(){try{return typeof user!=='undefined'?user:window.user||null}catch(_){return window.user||null}}
   function assignUser(value){try{user=value}catch(_){}window.user=value}
   function assignAppointments(value){try{appointments=value}catch(_){}window.appointments=value}
-  function save(){const u=currentUser();if(!u||!u.id||u.admin)return;try{localStorage.setItem(KEY,JSON.stringify({id:u.id,name:u.name||'',firstName:u.firstName||'',lastName:u.lastName||'',phone:u.phone||'',dob:u.dob||null}))}catch(_){}}
-  function clear(){try{localStorage.removeItem(KEY)}catch(_){}}
-  function read(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(_){return null}}
+  function cleanUser(u){if(!u||!u.id||u.admin)return null;return{id:u.id,name:u.name||'',firstName:u.firstName||u.first_name||'',lastName:u.lastName||u.last_name||'',phone:u.phone||'',dob:u.dob||u.birthDate||null}}
+  function localRead(){try{return JSON.parse(localStorage.getItem(KEY)||localStorage.getItem(LEGACY_KEY)||'null')}catch(_){return null}}
+  function localWrite(value){try{if(value){localStorage.setItem(KEY,JSON.stringify(value));localStorage.removeItem(LEGACY_KEY)}else{localStorage.removeItem(KEY);localStorage.removeItem(LEGACY_KEY)}}catch(_){}}
+  function openDb(){return new Promise(resolve=>{try{const req=indexedDB.open(DB_NAME,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(STORE))req.result.createObjectStore(STORE)};req.onsuccess=()=>resolve(req.result);req.onerror=()=>resolve(null)}catch(_){resolve(null)}})}
+  async function idbWrite(value){const db=await openDb();if(!db)return;await new Promise(resolve=>{try{const tx=db.transaction(STORE,'readwrite');const store=tx.objectStore(STORE);value?store.put(value,'customer'):store.delete('customer');tx.oncomplete=tx.onerror=tx.onabort=()=>resolve()}catch(_){resolve()}});db.close()}
+  async function idbRead(){const db=await openDb();if(!db)return null;const value=await new Promise(resolve=>{try{const tx=db.transaction(STORE,'readonly');const req=tx.objectStore(STORE).get('customer');req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null)}catch(_){resolve(null)}});db.close();return value}
+  function persistNow(){if(explicitLogout)return;const saved=cleanUser(currentUser());if(!saved)return;localWrite(saved);idbWrite(saved)}
+  async function clearPersisted(){localWrite(null);await idbWrite(null)}
   function mapAppointment(row){const start=new Date(row.starts_at);const extras=Array.isArray(row.extras)?row.extras:[];return{id:row.id,appointmentId:row.id,customerId:row.customer_id,service:row.service_name,price:Number(row.total_price||0),date:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit'}).format(start),time:new Intl.DateTimeFormat('he-IL',{timeZone:'Asia/Jerusalem',hour:'2-digit',minute:'2-digit',hour12:false}).format(start),minutes:row.treatment_minutes,buffer:row.buffer_minutes,extra:extras.map(x=>x.name).filter(Boolean).join(', '),eventId:row.google_event_id,status:row.status}}
+  async function refreshAppointments(saved){try{const response=await fetch('/api/customers/'+encodeURIComponent(saved.id)+'/appointments',{cache:'no-store'});if(!response.ok)return;const data=await response.json();assignAppointments((data.appointments||[]).filter(x=>x.status!=='cancelled').map(mapAppointment));window.renderHomeAppointments?.();window.renderNext?.()}catch(error){console.warn('Appointments refresh deferred',error)}}
+  function activate(saved){if(!saved?.id)return false;assignUser(saved);if(!Array.isArray(window.appointments))assignAppointments([]);if(typeof window.enterApp==='function')window.enterApp();window.renderHomeAppointments?.();window.renderNext?.();refreshAppointments(saved);return true}
   const originalEnter=window.enterApp;
-  if(typeof originalEnter==='function')window.enterApp=function(){save();return originalEnter.apply(this,arguments)};
+  if(typeof originalEnter==='function')window.enterApp=function(){const result=originalEnter.apply(this,arguments);queueMicrotask(persistNow);return result};
   const originalLogout=window.logout;
-  window.logout=function(){clear();assignUser(null);assignAppointments([]);try{document.getElementById('nav')?.classList.remove('show')}catch(_){}if(typeof originalLogout==='function'){try{return originalLogout.apply(this,arguments)}catch(_){}}window.show?.('login')};
-  async function refreshAppointments(saved){try{const response=await fetch('/api/customers/'+encodeURIComponent(saved.id)+'/appointments',{cache:'no-store'});if(!response.ok)return;const data=await response.json();assignAppointments((data.appointments||[]).filter(x=>x.status!=='cancelled').map(mapAppointment));window.renderHomeAppointments?.();window.renderNext?.();}catch(error){console.warn('Appointments refresh deferred',error)}}
-  function restoreImmediately(){const saved=read();if(!saved?.id||currentUser()?.id)return false;assignUser(saved);if(!Array.isArray(window.appointments))assignAppointments([]);if(typeof window.enterApp==='function')window.enterApp();refreshAppointments(saved);return true}
-  window.AMIT_TOUCH_RESTORE_SESSION=restoreImmediately;
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',restoreImmediately,{once:true});else restoreImmediately();
+  window.logout=function(){explicitLogout=true;clearPersisted();assignUser(null);assignAppointments([]);try{document.getElementById('nav')?.classList.remove('show')}catch(_){}if(typeof originalLogout==='function'){try{return originalLogout.apply(this,arguments)}catch(_){}}window.show?.('login')};
+  async function restore(){let saved=localRead();if(!saved?.id)saved=await idbRead();if(saved?.id){localWrite(saved);activate(saved);return true}return false}
+  window.AMIT_TOUCH_RESTORE_SESSION=restore;
+  window.__AMIT_SESSION_READY__=restore().finally(()=>{window.__AMIT_SESSION_RESTORE_DONE__=true;window.dispatchEvent(new Event('amit:session-ready'))});
+  window.addEventListener('pagehide',persistNow,{capture:true});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')persistNow()});
+  setInterval(persistNow,1500);
 })();
