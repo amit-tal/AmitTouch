@@ -12,6 +12,7 @@ app.use(express.json());
 const TZ = 'Asia/Jerusalem';
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
 const BUFFER_MINUTES = 30;
+const CALENDAR_EVENT_BUFFER_MINUTES = 30;
 const WORKDAY_START_HOUR = 8;
 const LAST_APPOINTMENT_START_HOUR = 20;
 const ADMIN_NAME = 'עמית טל';
@@ -57,13 +58,51 @@ async function getAccessibleCalendarIds(calendar) {
   return [...ids];
 }
 
+function googleEventRange(event) {
+  if (!event?.start) return null;
+  const start = event.start.dateTime
+    ? DateTime.fromISO(event.start.dateTime, { setZone: true })
+    : event.start.date
+      ? DateTime.fromISO(event.start.date, { zone: TZ }).startOf('day')
+      : null;
+  const end = event.end?.dateTime
+    ? DateTime.fromISO(event.end.dateTime, { setZone: true })
+    : event.end?.date
+      ? DateTime.fromISO(event.end.date, { zone: TZ }).startOf('day')
+      : start?.plus({ minutes: 1 });
+  if (!start?.isValid || !end?.isValid) return null;
+  return { start, end };
+}
+
 async function getGoogleBusyPeriods(calendar, timeMin, timeMax) {
   const calendarIds = await getAccessibleCalendarIds(calendar);
-  const result = await calendar.freebusy.query({ requestBody: { timeMin, timeMax, timeZone: TZ, items: calendarIds.map(id => ({ id })) } });
   const busy = [];
   for (const id of calendarIds) {
-    const entry = result.data.calendars?.[id];
-    if (entry?.busy?.length) busy.push(...entry.busy);
+    let pageToken;
+    do {
+      const result = await calendar.events.list({
+        calendarId: id,
+        timeMin,
+        timeMax,
+        singleEvents: true,
+        orderBy: 'startTime',
+        maxResults: 2500,
+        pageToken
+      });
+      for (const event of result.data.items || []) {
+        if (event.status === 'cancelled' || event.transparency === 'transparent') continue;
+        const range = googleEventRange(event);
+        if (!range) continue;
+        const isAmitTouchAppointment = /AMIT TOUCH/i.test(String(event.summary || ''));
+        busy.push({
+          start: range.start.toUTC().toISO(),
+          end: range.end.toUTC().toISO(),
+          source: 'google',
+          addCalendarBuffer: !isAmitTouchAppointment
+        });
+      }
+      pageToken = result.data.nextPageToken || undefined;
+    } while (pageToken);
   }
   return { calendarIds, busy };
 }
@@ -78,7 +117,7 @@ function pushIcalEventBusy(event, rangeStart, rangeEnd, busy) {
   const addOccurrence = startDate => {
     const start = DateTime.fromJSDate(startDate, { zone: 'utc' });
     const end = durationMs > 0 ? start.plus({ milliseconds: durationMs }) : start.plus({ minutes: 1 });
-    if (start.toMillis() < rangeEnd.toMillis() && end.toMillis() > rangeStart.toMillis()) busy.push({ start: start.toUTC().toISO(), end: end.toUTC().toISO(), source: 'icloud' });
+    if (start.toMillis() < rangeEnd.toMillis() && end.toMillis() > rangeStart.toMillis()) busy.push({ start: start.toUTC().toISO(), end: end.toUTC().toISO(), source: 'icloud', addCalendarBuffer: true });
   };
   if (event.rrule) {
     const occurrences = event.rrule.between(rangeStart.toJSDate(), rangeEnd.toJSDate(), true);
@@ -111,9 +150,21 @@ async function getIcloudBusyPeriods(timeMin, timeMax) {
 }
 
 async function getBusyPeriods(calendar, timeMin, timeMax) {
-  const googleBusy = await getGoogleBusyPeriods(calendar, timeMin, timeMax);
-  const icloudBusy = await getIcloudBusyPeriods(timeMin, timeMax);
+  const expandedMin = DateTime.fromISO(timeMin, { setZone: true }).minus({ minutes: CALENDAR_EVENT_BUFFER_MINUTES }).toUTC().toISO();
+  const expandedMax = DateTime.fromISO(timeMax, { setZone: true }).plus({ minutes: CALENDAR_EVENT_BUFFER_MINUTES }).toUTC().toISO();
+  const googleBusy = await getGoogleBusyPeriods(calendar, expandedMin, expandedMax);
+  const icloudBusy = await getIcloudBusyPeriods(expandedMin, expandedMax);
   return { calendarIds: googleBusy.calendarIds, icloudCalendars: icloudBusy.calendars, busy: [...googleBusy.busy, ...icloudBusy.busy] };
+}
+
+function conflictsWithBusy(start, end, item) {
+  let busyStart = DateTime.fromISO(item.start, { setZone: true });
+  let busyEnd = DateTime.fromISO(item.end, { setZone: true });
+  if (item.addCalendarBuffer) {
+    busyStart = busyStart.minus({ minutes: CALENDAR_EVENT_BUFFER_MINUTES });
+    busyEnd = busyEnd.plus({ minutes: CALENDAR_EVENT_BUFFER_MINUTES });
+  }
+  return start.toMillis() < busyEnd.toMillis() && end.toMillis() > busyStart.toMillis();
 }
 
 async function getCustomer(supabase, id) {
@@ -142,7 +193,7 @@ app.get('/api/health', async (_req, res) => {
     if (error) throw error;
     const calendar = calendarClient();
     const calendarIds = await getAccessibleCalendarIds(calendar);
-    res.json({ ok: true, database: true, calendarConfigured: true, approvalFlow: true, calendarsVisible: calendarIds.length, icloudConfigured: icloudConfigured(), appointmentStartHours: { sundayToThursday: '08:00–20:00', friday: '08:00–14:00', saturday: '20:00–23:00' }, bufferMinutes: BUFFER_MINUTES });
+    res.json({ ok: true, database: true, calendarConfigured: true, approvalFlow: true, calendarsVisible: calendarIds.length, icloudConfigured: icloudConfigured(), appointmentStartHours: { sundayToThursday: '08:00–20:00', friday: '08:00–14:00', saturday: '20:00–23:00' }, bufferMinutes: BUFFER_MINUTES, calendarEventBufferMinutes: CALENDAR_EVENT_BUFFER_MINUTES });
   } catch (error) { console.error(error); res.status(500).json({ ok: false, database: false }); }
 });
 
@@ -189,10 +240,10 @@ app.get('/api/availability', async (req, res) => {
     const lastStart = dayStart.set({ hour: window.lastHour, minute: 0 });
     for (let t = firstStart; t <= lastStart; t = t.plus({ minutes: 30 })) {
       const end = t.plus({ minutes: duration });
-      const conflict = busy.some(item => t.toMillis() < DateTime.fromISO(item.end).toMillis() && end.toMillis() > DateTime.fromISO(item.start).toMillis());
+      const conflict = busy.some(item => conflictsWithBusy(t, end, item));
       if (!conflict) slots.push(t.toFormat('HH:mm'));
     }
-    res.json({ date, slots, calendarsChecked: calendarIds.length, icloudCalendarsChecked: icloudCalendars, appointmentStartHours: window.label, bufferMinutes: BUFFER_MINUTES });
+    res.json({ date, slots, calendarsChecked: calendarIds.length, icloudCalendarsChecked: icloudCalendars, appointmentStartHours: window.label, bufferMinutes: BUFFER_MINUTES, calendarEventBufferMinutes: CALENDAR_EVENT_BUFFER_MINUTES });
   } catch (error) { console.error(error); res.status(500).json({ error: 'CALENDAR_AVAILABILITY_FAILED' }); }
 });
 
@@ -209,7 +260,9 @@ app.post('/api/book', async (req, res) => {
     const firstStart = start.startOf('day').set({ hour: window.firstHour, minute: 0 });
     const lastStart = start.startOf('day').set({ hour: window.lastHour, minute: 0 });
     if (start < firstStart || start > lastStart) return res.status(409).json({ error: 'OUTSIDE_WORKING_HOURS' });
-    const calendar = calendarClient(); const { busy } = await getBusyPeriods(calendar, start.toUTC().toISO(), blockedEnd.toUTC().toISO()); if (busy.length) return res.status(409).json({ error: 'SLOT_TAKEN' });
+    const calendar = calendarClient();
+    const { busy } = await getBusyPeriods(calendar, start.toUTC().toISO(), blockedEnd.toUTC().toISO());
+    if (busy.some(item => conflictsWithBusy(start, blockedEnd, item))) return res.status(409).json({ error: 'SLOT_TAKEN' });
     const eventTitle = isAdminCreated ? `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}` : `ממתין לאישור · AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}`;
     const event = await calendar.events.insert({ calendarId: CALENDAR_ID, requestBody: { summary: eventTitle, description: `סטטוס: ${status}\nלקוחה: ${customer.first_name} ${customer.last_name}\nנייד: ${customer.phone}\nטיפול: ${booking.service}\nתוספות: ${booking.extra || 'ללא'}\nמחיר: ₪${booking.price}\nזמן טיפול: ${booking.minutes} דקות\nBuffer: ${BUFFER_MINUTES} דקות`, start: { dateTime: start.toISO(), timeZone: TZ }, end: { dateTime: blockedEnd.toISO(), timeZone: TZ }, transparency: 'opaque' } });
     createdEventId = event.data.id; const extras = booking.extra ? [{ name: booking.extra }] : [];
