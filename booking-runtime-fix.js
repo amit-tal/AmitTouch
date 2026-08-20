@@ -1,5 +1,5 @@
 (function(){
-  const BUILD='20260820-booking-fix-v1';
+  const BUILD='20260820-booking-fix-v2';
 
   function getUser(){
     try{if(window.user&&window.user.id)return window.user;}catch(_){}
@@ -125,6 +125,7 @@
       });
       window.appointments=mapped;
       try{appointments=mapped;}catch(_){}
+      window.renderHomeAppointments?.();
       window.dispatchEvent(new CustomEvent('amit:appointments-updated'));
     }catch(error){console.warn('Appointment refresh failed',error);}
   }
@@ -146,9 +147,15 @@
         if(j.error==='PAST_SLOT'){window.calendar();return alert('המועד הזה כבר עבר. בחרי מועד אחר.');}
         throw new Error(j.error||'BOOKING_FAILED');
       }
-      await refreshCustomerAppointments(current.id);
-      const statusText=j.appointment?.status==='pending'?'הבקשה נשלחה וממתינה לאישור':'ההזמנה בוצעה בהצלחה!';
-      if(body)body.innerHTML=`<div class="confirm"><div class="check">✓</div><h2>${statusText}</h2><p class="heart">מחכה לך באהבה ♡</p><div class="summary glass card"><div><b>שירות</b><span>${payload.service}${payload.extra?' + '+payload.extra:''}</span></div><div><b>תאריך</b><span>${new Date(payload.date+'T12:00').toLocaleDateString('he-IL')}</span></div><div><b>שעה</b><span>${payload.time}</span></div></div><button class="primary" onclick="orders()">סיום</button></div>`;
+      const optimistic={id:j.appointment?.id||Date.now(),appointmentId:j.appointment?.id||null,customerId:current.id,service:payload.service,price:payload.price,date:payload.date,time:payload.time,minutes:payload.minutes,buffer:30,extra:payload.extra,eventId:j.appointment?.google_event_id||j.eventId||null,status:j.appointment?.status||'pending'};
+      const currentList=Array.isArray(window.appointments)?window.appointments.filter(a=>String(a.id)!==String(optimistic.id)):[];
+      window.appointments=[...currentList,optimistic];
+      try{appointments=window.appointments;}catch(_){}
+      window.renderHomeAppointments?.();
+      window.dispatchEvent(new CustomEvent('amit:appointments-updated'));
+      refreshCustomerAppointments(current.id);
+      const statusText=optimistic.status==='pending'?'הבקשה נשלחה וממתינה לאישור':'ההזמנה בוצעה בהצלחה!';
+      if(body)body.innerHTML=`<div class="confirm"><div class="check">✓</div><h2>${statusText}</h2><p class="heart">מחכה לך באהבה ♡</p><div class="summary glass card"><div><b>שירות</b><span>${payload.service}${payload.extra?' + '+payload.extra:''}</span></div><div><b>תאריך</b><span>${new Date(payload.date+'T12:00').toLocaleDateString('he-IL')}</span></div><div><b>שעה</b><span>${payload.time}</span></div><div><b>סטטוס</b><span>${optimistic.status==='pending'?'ממתין לאישור':'מאושר'}</span></div></div><button class="primary" onclick="show('home');window.renderHomeAppointments?.()">סיום</button></div>`;
     }catch(error){
       console.error('Booking failed',error);
       if(body)body.innerHTML='<div class="glass card booking-empty">לא הצלחתי לקבוע את התור. נסי שוב בעוד רגע.</div><button class="primary" onclick="calendar()">חזרה לבחירת מועד</button>';
