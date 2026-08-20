@@ -2,6 +2,8 @@ import express from 'express';
 import { google } from 'googleapis';
 import { DateTime } from 'luxon';
 import { createClient } from '@supabase/supabase-js';
+import { createDAVClient } from 'tsdav';
+import ical from 'node-ical';
 import fs from 'fs';
 
 const app = express();
@@ -10,6 +12,8 @@ app.use(express.json());
 const TZ = 'Asia/Jerusalem';
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
 const BUFFER_MINUTES = 30;
+const WORKDAY_START_HOUR = 8;
+const WORKDAY_END_HOUR = 20;
 const ADMIN_NAME = 'עמית טל';
 const ADMIN_PHONE = '0527467143';
 const ADMIN_CODE = '2303';
@@ -47,7 +51,7 @@ async function getAccessibleCalendarIds(calendar) {
   return [...ids];
 }
 
-async function getBusyPeriods(calendar, timeMin, timeMax) {
+async function getGoogleBusyPeriods(calendar, timeMin, timeMax) {
   const calendarIds = await getAccessibleCalendarIds(calendar);
   const result = await calendar.freebusy.query({ requestBody: { timeMin, timeMax, timeZone: TZ, items: calendarIds.map(id => ({ id })) } });
   const busy = [];
@@ -56,6 +60,63 @@ async function getBusyPeriods(calendar, timeMin, timeMax) {
     if (entry?.busy?.length) busy.push(...entry.busy);
   }
   return { calendarIds, busy };
+}
+
+function icloudConfigured() {
+  return Boolean(process.env.ICLOUD_APPLE_ID && process.env.ICLOUD_APP_PASSWORD);
+}
+
+function pushIcalEventBusy(event, rangeStart, rangeEnd, busy) {
+  if (!event || event.type !== 'VEVENT' || !event.start) return;
+  const durationMs = event.end ? Math.max(0, event.end.getTime() - event.start.getTime()) : 0;
+  const addOccurrence = startDate => {
+    const start = DateTime.fromJSDate(startDate, { zone: 'utc' });
+    const end = durationMs > 0 ? start.plus({ milliseconds: durationMs }) : start.plus({ minutes: 1 });
+    if (start.toMillis() < rangeEnd.toMillis() && end.toMillis() > rangeStart.toMillis()) busy.push({ start: start.toUTC().toISO(), end: end.toUTC().toISO(), source: 'icloud' });
+  };
+  if (event.rrule) {
+    const occurrences = event.rrule.between(rangeStart.toJSDate(), rangeEnd.toJSDate(), true);
+    for (const occurrence of occurrences) {
+      const exdates = event.exdate ? Object.values(event.exdate) : [];
+      const excluded = exdates.some(d => d instanceof Date && Math.abs(d.getTime() - occurrence.getTime()) < 1000);
+      if (!excluded) addOccurrence(occurrence);
+    }
+    return;
+  }
+  addOccurrence(event.start);
+}
+
+async function getIcloudBusyPeriods(timeMin, timeMax) {
+  if (!icloudConfigured()) return { calendars: 0, busy: [] };
+  const client = await createDAVClient({
+    serverUrl: 'https://caldav.icloud.com',
+    credentials: { username: process.env.ICLOUD_APPLE_ID, password: process.env.ICLOUD_APP_PASSWORD },
+    authMethod: 'Basic',
+    defaultAccountType: 'caldav'
+  });
+  const calendars = await client.fetchCalendars();
+  const rangeStart = DateTime.fromISO(timeMin, { setZone: true });
+  const rangeEnd = DateTime.fromISO(timeMax, { setZone: true });
+  const busy = [];
+  for (const calendar of calendars || []) {
+    const objects = await client.fetchCalendarObjects({ calendar, timeRange: { start: timeMin, end: timeMax } });
+    for (const object of objects || []) {
+      if (!object.data) continue;
+      const parsed = ical.sync.parseICS(object.data);
+      for (const component of Object.values(parsed)) pushIcalEventBusy(component, rangeStart, rangeEnd, busy);
+    }
+  }
+  return { calendars: calendars?.length || 0, busy };
+}
+
+async function getBusyPeriods(calendar, timeMin, timeMax) {
+  const googleBusy = await getGoogleBusyPeriods(calendar, timeMin, timeMax);
+  const icloudBusy = await getIcloudBusyPeriods(timeMin, timeMax);
+  return {
+    calendarIds: googleBusy.calendarIds,
+    icloudCalendars: icloudBusy.calendars,
+    busy: [...googleBusy.busy, ...icloudBusy.busy]
+  };
 }
 
 async function getCustomer(supabase, id) {
@@ -87,7 +148,7 @@ app.get('/api/health', async (_req, res) => {
     if (error) throw error;
     const calendar = calendarClient();
     const calendarIds = await getAccessibleCalendarIds(calendar);
-    res.json({ ok: true, database: true, calendarConfigured: true, approvalFlow: true, calendarsVisible: calendarIds.length });
+    res.json({ ok: true, database: true, calendarConfigured: true, approvalFlow: true, calendarsVisible: calendarIds.length, icloudConfigured: icloudConfigured(), workHours: '08:00-20:00', bufferMinutes: BUFFER_MINUTES });
   } catch (error) {
     console.error(error);
     res.status(500).json({ ok: false, database: false });
@@ -207,14 +268,16 @@ app.get('/api/availability', async (req, res) => {
     const dayStart = DateTime.fromISO(`${date}T00:00`, { zone: TZ });
     const dayEnd = dayStart.plus({ days: 1 });
     const calendar = calendarClient();
-    const { calendarIds, busy } = await getBusyPeriods(calendar, dayStart.toUTC().toISO(), dayEnd.toUTC().toISO());
+    const { calendarIds, icloudCalendars, busy } = await getBusyPeriods(calendar, dayStart.toUTC().toISO(), dayEnd.toUTC().toISO());
     const slots = [];
-    for (let t = dayStart.set({ hour: 9, minute: 0 }); t.plus({ minutes: duration }) <= dayStart.set({ hour: 19, minute: 0 }); t = t.plus({ minutes: 30 })) {
+    const workdayStart = dayStart.set({ hour: WORKDAY_START_HOUR, minute: 0 });
+    const workdayEnd = dayStart.set({ hour: WORKDAY_END_HOUR, minute: 0 });
+    for (let t = workdayStart; t.plus({ minutes: duration }) <= workdayEnd; t = t.plus({ minutes: 30 })) {
       const end = t.plus({ minutes: duration });
       const conflict = busy.some(item => t.toMillis() < DateTime.fromISO(item.end).toMillis() && end.toMillis() > DateTime.fromISO(item.start).toMillis());
       if (!conflict) slots.push(t.toFormat('HH:mm'));
     }
-    res.json({ date, slots, calendarsChecked: calendarIds.length });
+    res.json({ date, slots, calendarsChecked: calendarIds.length, icloudCalendarsChecked: icloudCalendars, workHours: '08:00-20:00', bufferMinutes: BUFFER_MINUTES });
   } catch (error) { console.error(error); res.status(500).json({ error: 'CALENDAR_AVAILABILITY_FAILED' }); }
 });
 
@@ -230,6 +293,9 @@ app.post('/api/book', async (req, res) => {
     const status = isAdminCreated ? 'confirmed' : 'pending';
     const start = DateTime.fromISO(`${booking.date}T${booking.time}`, { zone: TZ });
     const blockedEnd = start.plus({ minutes: Number(booking.minutes) + BUFFER_MINUTES });
+    const workdayStart = start.startOf('day').set({ hour: WORKDAY_START_HOUR });
+    const workdayEnd = start.startOf('day').set({ hour: WORKDAY_END_HOUR });
+    if (start < workdayStart || blockedEnd > workdayEnd) return res.status(409).json({ error: 'OUTSIDE_WORKING_HOURS' });
     const calendar = calendarClient();
     const { busy } = await getBusyPeriods(calendar, start.toUTC().toISO(), blockedEnd.toUTC().toISO());
     if (busy.length) return res.status(409).json({ error: 'SLOT_TAKEN' });
