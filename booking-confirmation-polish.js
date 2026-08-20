@@ -1,0 +1,23 @@
+(function(){
+ const id='amit-booking-confirmation-polish';document.getElementById(id)?.remove();
+ const heart='/assets/amit-touch-heart.svg?v=20260820-confirm';
+ const s=document.createElement('style');s.id=id;s.textContent=`
+ #book.confirm-mode .top{display:none!important}
+ #book.confirm-mode{padding-top:28px!important}
+ #book .confirm{width:100%!important;max-width:390px!important;margin:0 auto!important;text-align:center!important;direction:rtl!important}
+ #book .confirm .check{width:64px!important;height:64px!important;margin:8px auto 16px!important;border-radius:50%!important;display:grid!important;place-items:center!important;background:#397a73!important;color:#fff!important;font-size:32px!important;line-height:1!important;box-shadow:0 8px 22px rgba(47,113,107,.16)!important}
+ #book .confirm h2{margin:0!important;color:#315f5a!important;font-size:24px!important;line-height:1.35!important;font-weight:500!important}
+ #book .confirm .heart{display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;margin:10px 0 22px!important;color:#397a73!important;font-family:var(--ui-font)!important;font-size:18px!important;line-height:1.4!important;font-weight:400!important}
+ #book .confirm .heart:after{content:''!important;display:inline-block!important;width:25px!important;height:25px!important;background:url('${heart}') center/contain no-repeat!important;flex:0 0 25px!important}
+ #book .confirm .summary{padding:20px!important;border-radius:18px!important;text-align:right!important}
+ #book .confirm .summary>div{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:18px!important;padding:11px 0!important;font-size:16px!important;border-bottom:1px solid rgba(47,113,107,.09)!important}
+ #book .confirm .summary>div:last-of-type{border-bottom:0!important}
+ #book .confirm .summary b,#book .confirm .summary span{font-size:16px!important;line-height:1.4!important}
+ #book .confirm .summary b{font-weight:500!important;color:#315f5a!important}#book .confirm .summary span{font-weight:400!important;color:#617773!important;text-align:left!important}
+ #book .confirm .add-calendar{width:100%!important;height:48px!important;margin:14px 0 0!important;border:1px solid rgba(47,113,107,.28)!important;border-radius:11px!important;background:rgba(255,255,255,.55)!important;color:#315f5a!important;font-size:16px!important;font-weight:500!important;box-shadow:none!important}
+ #book .confirm>.primary{height:52px!important;margin-top:20px!important;font-size:17px!important}
+ `;document.head.appendChild(s);
+ function calendarUrl(){const b=window.booking||{};if(!b.date||!b.time||!b.service)return '#';const extra=b.extra||{m:0};const mins=(Number(b.service.m)||0)+(Number(extra.m)||0);const start=new Date(`${b.date}T${b.time}:00`);const end=new Date(start.getTime()+mins*60000);const fmt=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}00`;const title=encodeURIComponent(`AMIT TOUCH | ${b.service.n}`);return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${fmt(start)}/${fmt(end)}&details=${encodeURIComponent('תור ב AMIT TOUCH')}`;}
+ const observer=new MutationObserver(()=>{const confirm=document.querySelector('#book .confirm');if(!confirm)return;document.getElementById('book')?.classList.add('confirm-mode');const top=document.querySelector('#book .top');if(top)top.style.display='none';const love=confirm.querySelector('.heart');if(love)love.textContent='מחכה לך באהבה';const summary=confirm.querySelector('.summary');if(summary&&!summary.querySelector('.add-calendar')){const btn=document.createElement('button');btn.type='button';btn.className='add-calendar';btn.textContent='הוספה ליומן';btn.onclick=()=>{const url=calendarUrl();if(url!=='#')window.open(url,'_blank','noopener');};summary.appendChild(btn);}const finish=confirm.querySelector(':scope > .primary');if(finish){finish.textContent='סיום';finish.onclick=()=>{document.getElementById('book')?.classList.remove('confirm-mode');window.show?.('home');window.renderHomeAppointments?.();};}});
+ observer.observe(document.body,{childList:true,subtree:true});
+})();
