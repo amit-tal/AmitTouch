@@ -33,5 +33,6 @@
     document.querySelectorAll('[data-handwriting]').forEach(el=>el.classList.add('handwriting'));window.AMIT_TOUCH_HANDWRITING_FONT='GveretLevin';
   }catch(e){console.error('AMIT TOUCH brand assets failed',e);}
   splash.classList.remove('brand-loading','hide');splash.classList.add('brand-ready');splash.style.visibility='visible';splash.style.opacity='1';
+  window.__AMIT_BRAND_READY__=true;
   window.dispatchEvent(new CustomEvent('amit:splash-ready'));
 })();
