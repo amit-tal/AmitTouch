@@ -1,5 +1,5 @@
 (function(){
-  const BUILD='20260820-services-page-v2-home-icons';
+  const BUILD='20260820-services-page-v3-exact-five';
   const page=document.getElementById('services');
   if(!page)return;
 
@@ -10,6 +10,14 @@
     repair:'/assets/%D7%94%D7%A9%D7%9C%D7%9E%D7%94.png',
     remove:'/assets/%D7%94%D7%A1%D7%A8%D7%94.png'
   };
+
+  const PAGE_SERVICES=[
+    {id:'gel',label:'מניקור ג׳ל',price:150},
+    {id:'new',label:'בנייה',price:250},
+    {id:'fill',label:'מילוי',price:200},
+    {id:'repair',label:'תיקון',price:15},
+    {id:'remove',label:'הסרה',price:25}
+  ];
 
   document.getElementById('amit-services-page-style')?.remove();
   const style=document.createElement('style');
@@ -29,30 +37,28 @@
     #services .service-price{margin:0!important;font-size:14px!important;color:#536b68!important;font-weight:400!important;direction:ltr!important;text-align:right!important}
     #services .service-icon-wrap{width:58px!important;height:58px!important;display:flex!important;align-items:center!important;justify-content:center!important;justify-self:end!important}
     #services .service-icon-img{display:block!important;width:54px!important;height:58px!important;object-fit:contain!important;object-position:center!important}
-    #services .service-card.extra-service .service-price{font-size:13px!important}
   `;
   document.head.appendChild(style);
 
-  function getServices(){
-    try{if(Array.isArray(window.SERVICES))return window.SERVICES;}catch(_){}
-    try{if(typeof SERVICES!=='undefined'&&Array.isArray(SERVICES))return SERVICES;}catch(_){}
-    return [
-      {id:'gel',n:'לק ג׳ל',p:150,m:60},
-      {id:'fill',n:'מילוי',p:200,m:90},
-      {id:'new',n:'בנייה חדשה',p:250,m:120},
-      {id:'remove',n:'הסרה בלבד',p:25,m:30}
-    ];
+  function iconMarkup(id){return `<img class="service-icon-img" src="${ICONS[id]}?v=${BUILD}" alt="">`;}
+
+  function openRepair(){
+    try{
+      booking={service:{id:'repair',n:'תיקון',p:15,m:30,d:'תיקון נקודתי לציפורן בהתאם לסוג התיקון והחומר הקיים.'}};
+      window.show?.('detail');
+      const body=document.getElementById('detailBody');
+      if(body)body.innerHTML=`<div class="detail"><div class="art glass"><img src="${ICONS.repair}?v=${BUILD}" alt="" style="width:78px;height:78px;object-fit:contain"></div><h1>תיקון</h1><p>תיקון נקודתי לציפורן בהתאם לסוג התיקון והחומר הקיים.</p><div class="detail-price">החל מ ₪15</div><p>משך טיפול · 30 דקות</p><button class="primary" style="margin-top:16px" onclick="calendar()">הזמיני תור</button></div>`;
+    }catch(_){alert('לא ניתן לפתוח את השירות כרגע');}
   }
 
-  function iconFor(id){return ICONS[id]||ICONS.repair;}
-  function iconMarkup(src){return `<img class="service-icon-img" src="${src}?v=${BUILD}" alt="">`;}
-
   function render(){
-    const services=getServices();
-    page.innerHTML=`<div class="services-head"><button class="services-back" type="button" aria-label="חזרה">‹</button><h2>השירותים שלי</h2><span class="services-head-spacer"></span></div><div class="services-list">${services.map(s=>`<button class="service-card" type="button" data-id="${s.id}"><div class="service-copy"><h3>${s.n}</h3><p class="service-from">החל מ</p><p class="service-price">₪${s.p}</p></div><div class="service-icon-wrap">${iconMarkup(iconFor(s.id))}</div></button>`).join('')}<button class="service-card extra-service" type="button" data-extra="design"><div class="service-copy"><h3>ציורים ועיצוב</h3><p class="service-from">תוספת לפי מורכבות</p><p class="service-price">₪100+</p></div><div class="service-icon-wrap">${iconMarkup(ICONS.repair)}</div></button></div>`;
+    page.innerHTML=`<div class="services-head"><button class="services-back" type="button" aria-label="חזרה">‹</button><h2>השירותים שלי</h2><span class="services-head-spacer"></span></div><div class="services-list">${PAGE_SERVICES.map(s=>`<button class="service-card" type="button" data-id="${s.id}"><div class="service-copy"><h3>${s.label}</h3><p class="service-from">החל מ</p><p class="service-price">₪${s.price}</p></div><div class="service-icon-wrap">${iconMarkup(s.id)}</div></button>`).join('')}</div>`;
     page.querySelector('.services-back').onclick=()=>window.show?.('home');
-    page.querySelectorAll('.service-card[data-id]').forEach(btn=>btn.onclick=()=>window.detail?.(btn.dataset.id));
-    page.querySelector('[data-extra="design"]')?.addEventListener('click',()=>alert('תוספת זו נבחרת כחלק מהזמנת טיפול'));
+    page.querySelectorAll('.service-card').forEach(btn=>btn.onclick=()=>{
+      const id=btn.dataset.id;
+      if(id==='repair')return openRepair();
+      window.detail?.(id);
+    });
   }
 
   window.services=function(){render();window.show?.('services');};
