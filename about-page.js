@@ -1,5 +1,5 @@
 (function(){
- const BUILD='20260820-about-icons-align-v7';
+ const BUILD='20260820-about-icons-align-v8';
  let about=document.getElementById('about');
  if(!about){about=document.createElement('section');about.id='about';about.className='screen';document.querySelector('main.app')?.appendChild(about);}
  document.getElementById('amit-about-style')?.remove();
@@ -9,7 +9,7 @@
  #about .about-logo{display:block!important;width:min(190px,58vw)!important;height:auto!important;margin:8px auto 34px!important;object-fit:contain!important;background:transparent!important}
  #about .about-tagline{margin:0 auto 30px!important;max-width:320px!important;font-size:16px!important;line-height:1.75!important;font-weight:400!important;color:#385d59!important;background:transparent!important}
  #about .about-divider{height:1px!important;width:100%!important;max-width:330px!important;margin:0 auto 22px!important;background:linear-gradient(90deg,rgba(7,88,79,0) 0%,rgba(7,88,79,.22) 12%,rgba(7,88,79,.74) 50%,rgba(7,88,79,.22) 88%,rgba(7,88,79,0) 100%)!important;border:0!important;box-shadow:none!important}
- #about .about-contact{display:flex!important;flex-direction:column!important;align-items:center!important;gap:18px!important;width:100%!important;margin:0 auto 24px!important;background:transparent!important}
+ #about .about-contact{display:flex!important;flex-direction:column!important;align-items:center!important;gap:18px!important;width:100%!important;margin:0 auto 24px!important;background:transparent!important;transform:translateX(-14px)!important}
  #about .about-row{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;min-height:32px!important;width:210px!important;max-width:100%!important;color:#516b68!important;font-size:15px!important;font-weight:400!important;text-decoration:none!important;direction:rtl!important;background:transparent!important;border:0!important;box-shadow:none!important;white-space:nowrap!important}
  #about .about-row span{display:block!important;text-align:right!important;direction:ltr!important;line-height:1.25!important;white-space:nowrap!important}
  #about .about-row.location span{direction:rtl!important}
