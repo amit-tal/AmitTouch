@@ -1,5 +1,5 @@
 (function(){
-  const BUILD='20260820-home-services-build-upload-v9';
+  const BUILD='20260820-home-services-direct-v10';
   const home=document.getElementById('home');
   if(!home)return;
   const grid=home.querySelector('.quick-grid');
@@ -23,11 +23,11 @@
   document.head.appendChild(style);
 
   const services=[
-    {label:'מניקור ג׳ל',icon:'/assets/%D7%9E%D7%A0%D7%99%D7%A7%D7%95%D7%A8%20%D7%92%D7%9C.png'},
-    {label:'בניה',icon:'/assets/ChatGPT%20Image%20Aug%2019%2C%202026%2C%2004_04_17%20PM.png'},
-    {label:'מילוי',icon:'/assets/%D7%9E%D7%99%D7%9C%D7%95%D7%99.png'},
-    {label:'תיקון',icon:'/assets/%D7%94%D7%A9%D7%9C%D7%9E%D7%94.png'},
-    {label:'הסרה',icon:'/assets/%D7%94%D7%A1%D7%A8%D7%94.png'}
+    {id:'gel',label:'מניקור ג׳ל',icon:'/assets/%D7%9E%D7%A0%D7%99%D7%A7%D7%95%D7%A8%20%D7%92%D7%9C.png'},
+    {id:'new',label:'בניה',icon:'/assets/ChatGPT%20Image%20Aug%2019%2C%202026%2C%2004_04_17%20PM.png'},
+    {id:'fill',label:'מילוי',icon:'/assets/%D7%9E%D7%99%D7%9C%D7%95%D7%99.png'},
+    {id:'repair',label:'תיקון',icon:'/assets/%D7%94%D7%A9%D7%9C%D7%9E%D7%94.png'},
+    {id:'remove',label:'הסרה',icon:'/assets/%D7%94%D7%A1%D7%A8%D7%94.png'}
   ];
 
   grid.innerHTML='';
@@ -37,7 +37,10 @@
     btn.className='quick glass';
     btn.setAttribute('aria-label',service.label);
     btn.innerHTML=`<img class="service-art" src="${service.icon}?v=${BUILD}" alt=""><b>${service.label}</b>`;
-    btn.addEventListener('click',()=>{if(typeof window.services==='function')window.services();else if(typeof window.show==='function')window.show('services');});
+    btn.addEventListener('click',()=>{
+      if(typeof window.detail==='function') window.detail(service.id);
+      else if(typeof window.show==='function') window.show('detail');
+    });
     grid.appendChild(btn);
   });
   requestAnimationFrame(()=>{grid.scrollLeft=0;});
