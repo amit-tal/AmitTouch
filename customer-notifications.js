@@ -1,58 +1,15 @@
 (function(){
-  const BUILD='20260820-customer-notifications-v2';
+  const BUILD='20260820-customer-notifications-v3';
   const home=document.getElementById('home');
   if(!home)return;
-
-  const style=document.createElement('style');
-  style.id='amit-customer-notifications-style';
-  style.textContent=`
+  const style=document.createElement('style');style.id='amit-customer-notifications-style';style.textContent=`
     #home .customer-bell{position:absolute!important;top:18px!important;left:18px!important;z-index:40!important;width:42px!important;height:42px!important;border:0!important;background:rgba(255,255,255,.48)!important;border-radius:50%!important;display:grid!important;place-items:center!important;color:#07584f!important;box-shadow:0 5px 16px rgba(66,75,71,.08)!important;backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;cursor:pointer!important}
-    #home .customer-bell svg{width:22px!important;height:22px!important}
-    #home .customer-bell-dot{position:absolute!important;top:7px!important;right:7px!important;width:8px!important;height:8px!important;border-radius:50%!important;background:#e58f87!important;border:1.5px solid #fbf5ef!important;display:none!important}
-    #home .customer-bell.has-unread .customer-bell-dot{display:block!important}
-    .customer-notifications-page{position:fixed!important;inset:0!important;z-index:10000!important;background:#fbf5ef!important;overflow:auto!important;padding:18px 15px 96px!important;direction:rtl!important;font-family:Inter,sans-serif!important}
-    .customer-notifications-head{display:grid!important;grid-template-columns:42px 1fr 42px!important;align-items:center!important;margin-bottom:22px!important;color:#173f3b!important}
-    .customer-notifications-head h2{margin:0!important;text-align:center!important;font-size:18px!important;font-weight:500!important}
-    .customer-notifications-back{width:42px!important;height:42px!important;border:0!important;background:transparent!important;color:#173f3b!important;font-size:30px!important;font-weight:200!important;line-height:1!important;cursor:pointer!important}
-    .customer-notifications-list{display:flex!important;flex-direction:column!important;gap:12px!important}
-    .customer-notice{display:grid!important;grid-template-columns:minmax(0,1fr) 62px!important;gap:12px!important;align-items:center!important;padding:18px 16px!important;border:1px solid rgba(255,255,255,.92)!important;border-radius:16px!important;background:rgba(255,255,255,.55)!important;box-shadow:0 5px 16px rgba(82,66,58,.06)!important;color:#314c49!important}
-    .customer-notice h3{margin:0 0 8px!important;font-size:16px!important;font-weight:600!important;color:#173f3b!important}
-    .customer-notice p{margin:0!important;font-size:14px!important;line-height:1.55!important;font-weight:300!important}
-    .customer-notice-age{text-align:center!important;font-size:12px!important;color:#687d7a!important;white-space:nowrap!important}
-    .customer-notifications-empty{text-align:center!important;padding:38px 16px!important;color:#71827f!important;font-size:14px!important}
-  `;
-  document.head.appendChild(style);
-
-  const bell=document.createElement('button');
-  bell.type='button';
-  bell.className='customer-bell';
-  bell.setAttribute('aria-label','הודעות');
-  bell.innerHTML='<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 20h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="customer-bell-dot"></span>';
-  home.style.position='relative';
-  home.appendChild(bell);
-
-  function currentCustomerId(){try{return window.user?.id||user?.id||null}catch(_){return null}}
-  function seenKey(){return 'amit-touch-notifications-seen-'+String(currentCustomerId()||'guest')}
-  function seenAt(){return Number(localStorage.getItem(seenKey())||0)}
-  function markSeen(){localStorage.setItem(seenKey(),String(Date.now()));bell.classList.remove('has-unread')}
-  function age(date){const ms=Date.now()-new Date(date).getTime();if(!Number.isFinite(ms)||ms<0)return'';const d=Math.floor(ms/86400000);if(d>0)return d===1?'יום':d+' ימים';const h=Math.floor(ms/3600000);if(h>0)return h===1?'שעה':h+' שעות';const m=Math.max(1,Math.floor(ms/60000));return m===1?'דקה':m+' דקות'}
-  async function fetchNotifications(){
-    if(!currentCustomerId())return[];
-    const r=await fetch('/api/announcements?v='+BUILD,{cache:'no-store'});
-    const data=await r.json();
-    if(!r.ok)throw new Error(data.error||'NOTIFICATIONS_FAILED');
-    return data.announcements||[];
-  }
-  async function updateDot(){try{const items=await fetchNotifications();const last=seenAt();bell.classList.toggle('has-unread',items.some(n=>new Date(n.created_at).getTime()>last))}catch(_){bell.classList.remove('has-unread')}}
-  async function openNotifications(){
-    let page=document.querySelector('.customer-notifications-page');if(page)page.remove();
-    page=document.createElement('section');page.className='customer-notifications-page';
-    page.innerHTML='<div class="customer-notifications-head"><button class="customer-notifications-back" type="button" aria-label="חזרה">‹</button><h2>הודעות</h2><span></span></div><div class="customer-notifications-list"><div class="customer-notifications-empty">טוענת הודעות…</div></div>';
-    document.body.appendChild(page);page.querySelector('.customer-notifications-back').onclick=()=>page.remove();
-    try{const items=await fetchNotifications();const list=page.querySelector('.customer-notifications-list');list.innerHTML=items.length?items.map(n=>`<article class="customer-notice"><div><h3>${String(n.title||'הודעה')}</h3><p>${String(n.body||'')}</p></div><div class="customer-notice-age">${age(n.created_at)}</div></article>`).join(''):'<div class="customer-notifications-empty">אין לך הודעות כרגע</div>';markSeen()}catch(e){page.querySelector('.customer-notifications-list').innerHTML='<div class="customer-notifications-empty">אין לך הודעות כרגע</div>';bell.classList.remove('has-unread')}
-  }
-  bell.addEventListener('click',openNotifications);
-  window.refreshCustomerNotifications=updateDot;
-  setTimeout(updateDot,800);
-  window.addEventListener('amit:appointments-updated',updateDot);
+    #home .customer-bell svg{width:22px!important;height:22px!important}.customer-bell-dot{position:absolute!important;top:7px!important;right:7px!important;width:8px!important;height:8px!important;border-radius:50%!important;background:#e58f87!important;border:1.5px solid #fbf5ef!important;display:none!important}#home .customer-bell.has-unread .customer-bell-dot{display:block!important}
+    .customer-notifications-page{position:fixed!important;inset:0!important;z-index:10000!important;background:#fbf5ef!important;overflow:auto!important;padding:18px 15px 96px!important;direction:rtl!important;font-family:Inter,sans-serif!important}.customer-notifications-head{display:grid!important;grid-template-columns:42px 1fr 42px!important;align-items:center!important;margin-bottom:22px!important;color:#173f3b!important}.customer-notifications-head h2{margin:0!important;text-align:center!important;font-size:18px!important;font-weight:500!important}.customer-notifications-back{width:42px!important;height:42px!important;border:0!important;background:transparent!important;color:#173f3b!important;font-size:30px!important;font-weight:200!important;line-height:1!important;cursor:pointer!important}.customer-notifications-list{display:flex!important;flex-direction:column!important;gap:12px!important}
+    .customer-notice{display:grid!important;grid-template-columns:minmax(0,1fr) 54px!important;gap:8px!important;align-items:center!important;padding:18px 16px!important;border:1px solid rgba(255,255,255,.92)!important;border-radius:16px!important;background:rgba(255,255,255,.55)!important;box-shadow:0 5px 16px rgba(82,66,58,.06)!important;color:#314c49!important}.customer-notice>div:first-child{padding-right:0!important;margin-right:0!important;text-align:right!important}.customer-notice h3{margin:0 0 8px!important;font-size:16px!important;font-weight:600!important;color:#173f3b!important;text-align:right!important}.customer-notice p{margin:0!important;font-size:14px!important;line-height:1.55!important;font-weight:300!important;text-align:right!important}.customer-notice-age{text-align:left!important;font-size:12px!important;color:#687d7a!important;white-space:nowrap!important}.customer-notifications-empty{text-align:center!important;padding:38px 16px!important;color:#71827f!important;font-size:14px!important}`;document.head.appendChild(style);
+  const bell=document.createElement('button');bell.type='button';bell.className='customer-bell';bell.setAttribute('aria-label','הודעות');bell.innerHTML='<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 20h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="customer-bell-dot"></span>';home.style.position='relative';home.appendChild(bell);
+  function currentCustomerId(){try{return window.user?.id||user?.id||null}catch(_){return null}}function seenKey(){return'amit-touch-notifications-seen-'+String(currentCustomerId()||'guest')}function seenAt(){return Number(localStorage.getItem(seenKey())||0)}function markSeen(){localStorage.setItem(seenKey(),String(Date.now()));bell.classList.remove('has-unread')}function age(date){const ms=Date.now()-new Date(date).getTime();if(!Number.isFinite(ms)||ms<0)return'';const d=Math.floor(ms/86400000);if(d>0)return d===1?'יום':d+' ימים';const h=Math.floor(ms/3600000);if(h>0)return h===1?'שעה':h+' שעות';const m=Math.max(1,Math.floor(ms/60000));return m===1?'דקה':m+' דקות'}
+  async function fetchNotifications(){if(!currentCustomerId())return[];const r=await fetch('/api/announcements?v='+BUILD,{cache:'no-store'});const data=await r.json();if(!r.ok)throw new Error(data.error||'NOTIFICATIONS_FAILED');return data.announcements||[]}
+  async function updateDot(){try{const items=await fetchNotifications(),last=seenAt();bell.classList.toggle('has-unread',items.some(n=>new Date(n.created_at).getTime()>last))}catch(_){bell.classList.remove('has-unread')}}
+  async function openNotifications(){let page=document.querySelector('.customer-notifications-page');if(page)page.remove();page=document.createElement('section');page.className='customer-notifications-page';page.innerHTML='<div class="customer-notifications-head"><button class="customer-notifications-back" type="button" aria-label="חזרה">‹</button><h2>הודעות</h2><span></span></div><div class="customer-notifications-list"><div class="customer-notifications-empty">טוענת הודעות…</div></div>';document.body.appendChild(page);page.querySelector('.customer-notifications-back').onclick=()=>page.remove();try{const items=await fetchNotifications(),list=page.querySelector('.customer-notifications-list');list.innerHTML=items.length?items.map(n=>`<article class="customer-notice"><div><h3>${String(n.title||'הודעה')}</h3><p>${String(n.body||'')}</p></div><div class="customer-notice-age">${age(n.created_at)}</div></article>`).join(''):'<div class="customer-notifications-empty">אין לך הודעות כרגע</div>';markSeen()}catch(e){page.querySelector('.customer-notifications-list').innerHTML='<div class="customer-notifications-empty">אין לך הודעות כרגע</div>';bell.classList.remove('has-unread')}}bell.addEventListener('click',openNotifications);window.refreshCustomerNotifications=updateDot;setTimeout(updateDot,800);window.addEventListener('amit:appointments-updated',updateDot);
 })();
