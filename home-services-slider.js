@@ -1,5 +1,5 @@
 (function(){
-  const BUILD='20260820-home-services-clean-v6';
+  const BUILD='20260820-home-services-local-build-v7';
   const home=document.getElementById('home');
   if(!home)return;
   const grid=home.querySelector('.quick-grid');
@@ -9,8 +9,8 @@
   const style=document.createElement('style');
   style.id='amit-home-services-slider-style';
   style.textContent=`
-    #home .home-hero,#home .quick-grid,#home .appointments-stack,#home .appointment-block,#home .section-title,#home .appointment-heading{background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important;border:0!important;outline:0!important;filter:none!important}
-    #home .home-hero:before,#home .home-hero:after,#home .quick-grid:before,#home .quick-grid:after,#home .appointments-stack:before,#home .appointments-stack:after,#home .appointment-block:before,#home .appointment-block:after{content:none!important;display:none!important;background:none!important;box-shadow:none!important}
+    #home,#home .home-hero,#home .quick-grid,#home .appointments-stack,#home .appointment-block,#home .section-title,#home .appointment-heading{background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important;border-color:transparent!important;outline:0!important;filter:none!important}
+    #home .home-hero:before,#home .home-hero:after,#home .quick-grid:before,#home .quick-grid:after,#home .appointments-stack:before,#home .appointments-stack:after,#home .appointment-block:before,#home .appointment-block:after,#home .section-title>span:before,#home .section-title>span:after{content:none!important;display:none!important;background:none!important;box-shadow:none!important}
     #home .section-title{display:flex!important;align-items:center!important;justify-content:center!important;gap:14px!important;margin:18px 0 16px!important;padding:0!important;color:#07584f!important;font-size:20px!important;font-weight:500!important}
     #home .section-title:before,#home .section-title:after{content:''!important;display:block!important;height:1px!important;flex:1!important;background:linear-gradient(90deg,transparent 0%,rgba(7,88,79,.22) 28%,rgba(7,88,79,.72) 100%)!important;box-shadow:none!important}
     #home .section-title:after{transform:scaleX(-1)!important}
@@ -24,7 +24,7 @@
 
   const services=[
     {label:'מניקור ג׳ל',icon:'/assets/%D7%9E%D7%A0%D7%99%D7%A7%D7%95%D7%A8%20%D7%92%D7%9C.png'},
-    {label:'בניה',icon:'https://raw.githubusercontent.com/amit-tal/AmitTouch/main/assets/%D7%91%D7%A0%D7%99%D7%99%D7%94.png?sha=50c128a0310c454ab6afdee1f529606807d46ce5'},
+    {label:'בניה',icon:'/assets/%D7%91%D7%A0%D7%99%D7%99%D7%94.png?asset=50c128a0310c454ab6afdee1f529606807d46ce5'},
     {label:'מילוי',icon:'/assets/%D7%9E%D7%99%D7%9C%D7%95%D7%99.png'},
     {label:'תיקון',icon:'/assets/%D7%94%D7%A9%D7%9C%D7%9E%D7%94.png'},
     {label:'הסרה',icon:'/assets/%D7%94%D7%A1%D7%A8%D7%94.png'}
