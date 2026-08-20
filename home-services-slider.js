@@ -1,5 +1,5 @@
 (function(){
-  const BUILD='20260820-home-services-build-icon-v8';
+  const BUILD='20260820-home-services-build-upload-v9';
   const home=document.getElementById('home');
   if(!home)return;
   const grid=home.querySelector('.quick-grid');
@@ -24,7 +24,7 @@
 
   const services=[
     {label:'מניקור ג׳ל',icon:'/assets/%D7%9E%D7%A0%D7%99%D7%A7%D7%95%D7%A8%20%D7%92%D7%9C.png'},
-    {label:'בניה',icon:'/assets/%D7%91%D7%A0%D7%99%D7%99%D7%94.png'},
+    {label:'בניה',icon:'/assets/ChatGPT%20Image%20Aug%2019%2C%202026%2C%2004_04_17%20PM.png'},
     {label:'מילוי',icon:'/assets/%D7%9E%D7%99%D7%9C%D7%95%D7%99.png'},
     {label:'תיקון',icon:'/assets/%D7%94%D7%A9%D7%9C%D7%9E%D7%94.png'},
     {label:'הסרה',icon:'/assets/%D7%94%D7%A1%D7%A8%D7%94.png'}
