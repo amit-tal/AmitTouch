@@ -3,6 +3,8 @@ services:
     name: amit-touch
     runtime: node
     plan: free
+    branch: main
+    autoDeploy: true
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /api/health
@@ -12,4 +14,8 @@ services:
       - key: GOOGLE_SERVICE_ACCOUNT_EMAIL
         sync: false
       - key: GOOGLE_PRIVATE_KEY
+        sync: false
+      - key: ICLOUD_APPLE_ID
+        sync: false
+      - key: ICLOUD_APP_PASSWORD
         sync: false
