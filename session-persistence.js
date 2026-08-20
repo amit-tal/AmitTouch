@@ -11,6 +11,8 @@
   if(typeof originalEnter==='function')window.enterApp=function(){save();return originalEnter.apply(this,arguments)};
   const originalLogout=window.logout;
   window.logout=function(){clear();assignUser(null);assignAppointments([]);try{document.getElementById('nav')?.classList.remove('show')}catch(_){}if(typeof originalLogout==='function'){try{return originalLogout.apply(this,arguments)}catch(_){}}window.show?.('login')};
-  async function restore(){const saved=read();if(!saved?.id||currentUser()?.id)return;try{const response=await fetch('/api/customers/'+encodeURIComponent(saved.id)+'/appointments',{cache:'no-store'});if(!response.ok){clear();return}const data=await response.json();assignUser(saved);assignAppointments((data.appointments||[]).filter(x=>x.status!=='cancelled').map(mapAppointment));save();if(typeof window.enterApp==='function')window.enterApp();window.renderHomeAppointments?.();window.renderNext?.();}catch(error){console.warn('Session restore deferred',error)}}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(restore,0),{once:true});else setTimeout(restore,0);
+  async function refreshAppointments(saved){try{const response=await fetch('/api/customers/'+encodeURIComponent(saved.id)+'/appointments',{cache:'no-store'});if(!response.ok)return;const data=await response.json();assignAppointments((data.appointments||[]).filter(x=>x.status!=='cancelled').map(mapAppointment));window.renderHomeAppointments?.();window.renderNext?.();}catch(error){console.warn('Appointments refresh deferred',error)}}
+  function restoreImmediately(){const saved=read();if(!saved?.id||currentUser()?.id)return false;assignUser(saved);if(!Array.isArray(window.appointments))assignAppointments([]);if(typeof window.enterApp==='function')window.enterApp();refreshAppointments(saved);return true}
+  window.AMIT_TOUCH_RESTORE_SESSION=restoreImmediately;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',restoreImmediately,{once:true});else restoreImmediately();
 })();
