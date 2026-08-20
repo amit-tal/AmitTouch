@@ -156,6 +156,36 @@ app.get('/api/admin/notifications', async (_req, res) => {
   } catch (error) { console.error(error); res.status(500).json({ error: 'NOTIFICATIONS_FAILED' }); }
 });
 
+app.get('/api/announcements', async (_req, res) => {
+  try {
+    const supabase = supabaseClient();
+    const { data, error } = await supabase.from('admin_notifications').select('*').eq('type', 'broadcast').order('created_at', { ascending: false }).limit(20);
+    if (error) throw error;
+    res.json({ announcements: data || [] });
+  } catch (error) { console.error(error); res.status(500).json({ error: 'ANNOUNCEMENTS_FAILED' }); }
+});
+
+app.post('/api/admin/announcements', async (req, res) => {
+  try {
+    const title = String(req.body.title || '').trim();
+    const body = String(req.body.body || '').trim();
+    if (!title || !body) return res.status(400).json({ error: 'TITLE_AND_BODY_REQUIRED' });
+    const supabase = supabaseClient();
+    const { data, error } = await supabase.from('admin_notifications').insert({ type: 'broadcast', title, body, metadata: { audience: 'all_customers' } }).select().single();
+    if (error) throw error;
+    res.status(201).json({ ok: true, announcement: data });
+  } catch (error) { console.error(error); res.status(500).json({ error: 'ANNOUNCEMENT_CREATE_FAILED' }); }
+});
+
+app.delete('/api/admin/announcements/:announcementId', async (req, res) => {
+  try {
+    const supabase = supabaseClient();
+    const { error } = await supabase.from('admin_notifications').delete().eq('id', req.params.announcementId).eq('type', 'broadcast');
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (error) { console.error(error); res.status(500).json({ error: 'ANNOUNCEMENT_DELETE_FAILED' }); }
+});
+
 app.get('/api/admin/appointments', async (_req, res) => {
   try {
     const supabase = supabaseClient();
