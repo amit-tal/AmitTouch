@@ -16,6 +16,25 @@
   document.head.appendChild(style);
   document.querySelectorAll('[data-handwriting]').forEach(el=>el.classList.add('handwriting'));
   window.AMIT_TOUCH_HANDWRITING_FONT='GveretLevin';
-  window.__AMIT_BRAND_READY__=true;
-  window.dispatchEvent(new CustomEvent('amit:splash-ready'));
+
+  window.__AMIT_HANDWRITING_READY__=(async function(){
+    try{
+      const paths=['/assets/handwriting.part0.b64','/assets/handwriting.part1.b64','/assets/handwriting.part2.b64','/assets/handwriting.part3.b64'];
+      const parts=await Promise.all(paths.map(path=>fetch(path,{cache:'force-cache'}).then(r=>r.ok?r.text():Promise.reject(new Error('font part')))));
+      const base64=parts.join('').replace(/\s+/g,'');
+      const face=new FontFace('GveretLevin',`url(data:font/woff2;base64,${base64}) format('woff2')`,{weight:'100 900',style:'normal',display:'block'});
+      document.fonts.add(face);
+      await face.load();
+      document.documentElement.classList.add('amit-handwriting-ready');
+      return true;
+    }catch(e){
+      console.warn('Handwriting font could not be restored',e);
+      return false;
+    }
+  })();
+
+  window.__AMIT_HANDWRITING_READY__.finally(()=>{
+    window.__AMIT_BRAND_READY__=true;
+    window.dispatchEvent(new CustomEvent('amit:splash-ready'));
+  });
 })();
