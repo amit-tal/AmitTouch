@@ -1,5 +1,5 @@
 (function(){
- const BUILD='20260820-service-detail-extras-v6';
+ const BUILD='20260820-service-detail-extras-v7';
  const ICONS={gel:'/assets/%D7%9E%D7%A0%D7%99%D7%A7%D7%95%D7%A8%20%D7%92%D7%9C.png',new:'/assets/ChatGPT%20Image%20Aug%2019%2C%202026%2C%2004_04_17%20PM.png',fill:'/assets/%D7%9E%D7%99%D7%9C%D7%95%D7%99.png',repair:'/assets/%D7%94%D7%A9%D7%9C%D7%9E%D7%94.png',remove:'/assets/%D7%94%D7%A1%D7%A8%D7%94.png'};
  const COPY={
   gel:{desc:'מניקור ג׳ל מוקפד במראה נקי ומדויק, כולל הכנת הציפורן, התאמת צורה ומריחה מקצועית.',include:['ייעוץ והתאמת צורה','מניקור והכנת הציפורן','מריחת ג׳ל וגימור מדויק']},
@@ -32,8 +32,8 @@
  #detail .extra-option .extra-check{width:19px!important;height:19px!important;border-radius:50%!important;border:1.4px solid rgba(47,113,107,.42)!important;display:grid!important;place-items:center!important;color:transparent!important;font-size:12px!important;font-weight:600!important;background:rgba(255,255,255,.35)!important}
  #detail .extra-option .extra-copy strong{display:block!important;font-size:10.5px!important;font-weight:500!important;line-height:1.2!important}.extra-option .extra-copy small{display:block!important;font-size:8.8px!important;font-weight:300!important;color:#7b8986!important;margin-top:2px!important;line-height:1.2!important}
  #detail .extra-option.extra-selected{background:rgba(255,255,255,.72)!important;border-color:rgba(47,113,107,.45)!important;opacity:1!important}.extra-option.extra-selected .extra-check{background:#397a73!important;border-color:#397a73!important;color:#fff!important}.extra-option.extra-dimmed{opacity:.34!important}
- #detail .service-detail-book{width:100%!important;height:46px!important;border:0!important;border-radius:9px!important;padding:0 14px!important;background:linear-gradient(90deg,#397d76,#276a64)!important;color:white!important;font-size:15px!important;font-weight:600!important;box-shadow:0 6px 14px rgba(37,93,87,.12)!important;margin:0!important}#detail .service-detail-book:disabled{opacity:.34!important;box-shadow:none!important;cursor:not-allowed!important}
- #detail .extra-required-note{text-align:center!important;font-size:9.5px!important;color:#87918f!important;margin:2px 0 5px!important}
+ #detail .service-detail-book{width:100%!important;height:46px!important;border:0!important;border-radius:9px!important;padding:0 14px!important;background:linear-gradient(90deg,#397d76,#276a64)!important;color:white!important;font-size:15px!important;font-weight:600!important;box-shadow:0 6px 14px rgba(37,93,87,.12)!important;margin:8px 0 0!important}#detail .service-detail-book:disabled{opacity:.34!important;box-shadow:none!important;cursor:not-allowed!important}
+ #detail .extra-required-note{text-align:center!important;font-size:9.5px!important;color:#87918f!important;margin:2px 0 0!important}
  @media(max-height:720px){#detail .service-detail-icon{height:67px!important}.service-detail-icon img{height:67px!important}#detail .service-detail-desc{line-height:1.3!important}#detail .service-detail-include{display:none!important}#detail .service-detail-extras{padding:7px 12px!important}.extra-option{min-height:37px!important}#detail .service-detail-book{height:42px!important}}
  `;document.head.appendChild(s);
  const original=window.detail;
