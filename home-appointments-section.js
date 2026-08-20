@@ -1,6 +1,6 @@
 (function(){
  const home=document.getElementById('home');if(!home)return;
- const BUILD='20260820-home-appointments-pending-v8';
+ const BUILD='20260820-home-appointments-empty-plain-v9';
  document.getElementById('amit-home-appointments-style')?.remove();
  const style=document.createElement('style');style.id='amit-home-appointments-style';style.textContent=`
  #home .appointments-stack,#home .appointment-block,#home .appointment-heading{background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important;border:0!important;outline:0!important;filter:none!important}
@@ -23,7 +23,7 @@
  #home .appointment-day{font-size:14px!important;line-height:1.2!important;font-weight:500!important;margin:0 0 4px!important}
  #home .appointment-date-num{font-size:27px!important;line-height:1!important;font-weight:400!important;margin:0!important}
  #home .appointment-time{font-size:17px!important;line-height:1.2!important;font-weight:300!important;color:#e58f87!important;margin:7px 0 0!important}
- #home .appointment-empty{padding:18px!important;border-radius:18px!important;text-align:center!important;font-family:Inter,sans-serif!important;font-size:14px!important;font-weight:300!important;color:#67807d!important;background:rgba(255,255,255,.42)!important;border:1px solid rgba(255,255,255,.72)!important}
+ #home .appointment-empty{padding:8px 0 2px!important;text-align:center!important;font-family:Inter,sans-serif!important;font-size:14px!important;line-height:1.5!important;font-weight:300!important;color:#71827f!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
  @media(max-width:360px){#home .appointment-card{grid-template-columns:46px minmax(0,1fr) 74px!important;padding:14px 12px!important;gap:10px!important}#home .appointment-service{font-size:18px!important}}
  `;document.head.appendChild(style);
 
