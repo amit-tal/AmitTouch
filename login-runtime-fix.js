@@ -56,6 +56,7 @@
           .then(r=>r.ok?r.json():Promise.reject(new Error('APPOINTMENTS_FAILED')))
           .then(result=>{
             window.appointments=(result.appointments||[]).filter(x=>x.status!=='cancelled').map(mapAppointment);
+            window.renderHomeAppointments?.();
             window.renderNext?.();
           })
           .catch(error=>console.warn('Signed in successfully; appointments will retry later.',error));
