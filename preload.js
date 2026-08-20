@@ -1,121 +1,38 @@
 import fs from 'fs';
 const originalReadFileSync=fs.readFileSync.bind(fs);
 function readTextParts(parts){try{return parts.map(p=>originalReadFileSync(new URL(p,import.meta.url),'utf8')).join('').replace(/\s+/g,'')}catch(_){return''}}
-function readBase64(path){try{return originalReadFileSync(new URL(path,import.meta.url)).toString('base64')}catch(_){return''}}
-const splashBg64=readTextParts(['./assets/splash.part0.b64','./assets/splash.part1.b64','./assets/splash.part2.b64','./assets/splash.part3.b64','./assets/splash.part4.b64']);
 const handFont64=readTextParts(['./assets/handwriting.part0.b64','./assets/handwriting.part1.b64','./assets/handwriting.part2.b64','./assets/handwriting.part3.b64']);
-const splashLogo64=readBase64('./assets/amitouch_logo_vector.png');
-const splashHeart64=readBase64('./assets/amit-touch-heart.svg');
 
 fs.readFileSync=function patchedReadFileSync(path,...args){
   const result=originalReadFileSync(path,...args);
-  const pathText=String(path||'');
-  if(!pathText.endsWith('index.html'))return result;
+  if(!String(path||'').endsWith('index.html'))return result;
   const isBuffer=Buffer.isBuffer(result);
   let html=isBuffer?result.toString('utf8'):String(result);
-  const build='20260820-handwriting-boot-v71';
-  const finalLogo=`/assets/amitouch_logo_vector.png?v=${build}`;
-  const bootLogo=splashLogo64?`data:image/png;base64,${splashLogo64}`:finalLogo;
-  const bootHeart=splashHeart64?`data:image/svg+xml;base64,${splashHeart64}`:`/assets/amit-touch-heart.svg?v=${build}`;
-  const bootBg=splashBg64?`data:image/webp;base64,${splashBg64}`:'';
+  const build='20260820-stable-splash-v72';
+  const logo=`/assets/amitouch_logo_vector.png?v=${build}`;
+  const heart=`/assets/amit-touch-heart.svg?v=${build}`;
+  const bg=`/assets/splash-bg.webp?v=${build}`;
   const handFont=handFont64?`data:font/woff2;base64,${handFont64}`:'';
 
-  html=html.replaceAll('/assets/amit-touch-logo.svg',finalLogo)
-    .replaceAll('/assets/amit-touch-logo.webp?v=20260815-final-logo',finalLogo)
-    .replaceAll('/assets/amit-touch-logo.webp?v=20260815-final',finalLogo)
-    .replaceAll('/assets/amit-touch-logo.webp',finalLogo)
-    .replaceAll('/assets/amit-touch-logo.png',finalLogo)
-    .replaceAll('/assets/amit-touch-logo.jpg',finalLogo)
-    .replaceAll('/assets/Amit%20Touch_Logo.png?v=20260815-uploaded',finalLogo)
-    .replaceAll('/assets/Amit%20Touch_Logo.png?v=20260815-login-2',finalLogo)
-    .replaceAll('/assets/Amit%20Touch_Logo.png?v=20260815-login',finalLogo)
-    .replaceAll('/assets/Amit%20Touch_Logo.png',finalLogo);
-
+  html=html.replaceAll('/assets/amit-touch-logo.svg',logo)
+    .replaceAll('/assets/amit-touch-logo.webp?v=20260815-final-logo',logo)
+    .replaceAll('/assets/amit-touch-logo.webp?v=20260815-final',logo)
+    .replaceAll('/assets/amit-touch-logo.webp',logo)
+    .replaceAll('/assets/amit-touch-logo.png',logo)
+    .replaceAll('/assets/amit-touch-logo.jpg',logo)
+    .replaceAll('/assets/Amit%20Touch_Logo.png?v=20260815-uploaded',logo)
+    .replaceAll('/assets/Amit%20Touch_Logo.png?v=20260815-login-2',logo)
+    .replaceAll('/assets/Amit%20Touch_Logo.png?v=20260815-login',logo)
+    .replaceAll('/assets/Amit%20Touch_Logo.png',logo);
   html=html.replace(/setTimeout\(\(\)=>document\.getElementById\('splash'\)\.classList\.add\('hide'\),1600\);?/g,'');
 
-  const bootHead=`<script>(function(){
-    document.documentElement.classList.add('amit-booting');
-    var KEYS=['amit-touch-signed-in-customer-v5','amit-touch-signed-in-customer-v4','amit-touch-signed-in-customer-v3','amit-touch-signed-in-customer-v2','amit-touch-signed-in-customer-v1'];
-    function clean(u){if(!u||!u.id||u.admin)return null;return{id:u.id,name:u.name||u.fullName||'',firstName:u.firstName||u.first_name||'',lastName:u.lastName||u.last_name||'',phone:u.phone||'',dob:u.dob||u.birthDate||null}}
-    function localRead(){try{for(var i=0;i<KEYS.length;i++){var raw=localStorage.getItem(KEYS[i]);if(!raw)continue;var parsed=clean(JSON.parse(raw));if(parsed)return parsed}}catch(e){}return null}
-    function localWrite(u){try{var c=clean(u);if(!c)return;localStorage.setItem(KEYS[0],JSON.stringify(c));for(var i=1;i<KEYS.length;i++)localStorage.removeItem(KEYS[i]);window.__AMIT_EARLY_SESSION__=c}catch(e){}}
-    window.__AMIT_SAVE_DEVICE_SESSION__=localWrite;
-    window.__AMIT_EARLY_SESSION__=localRead();
-    window.__AMIT_BOOT_SESSION_PROMISE__=(async function(){
-      try{
-        var r=await fetch('/api/session',{credentials:'same-origin',cache:'no-store'});
-        if(r.ok){var d=await r.json();if(d&&d.authenticated&&d.customer){var c=clean(d.customer);if(c){localWrite(c);return c}}}
-      }catch(e){}
-      var saved=window.__AMIT_EARLY_SESSION__;
-      if(saved&&saved.id&&saved.name&&saved.phone){
-        try{
-          var lr=await fetch('/api/login',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:saved.name,phone:saved.phone})});
-          if(lr.ok){var ld=await lr.json();if(ld&&ld.role==='customer'&&ld.customer){var migrated=clean(ld.customer);if(migrated){localWrite(migrated);return migrated}}}
-        }catch(e){}
-      }
-      return saved||null;
-    })();
-  })();</script>`;
+  const bootHead=`<script>(function(){document.documentElement.classList.add('amit-booting');var K='amit-touch-signed-in-customer-v5';function clean(u){if(!u||!u.id||u.admin)return null;return{id:u.id,name:u.name||u.fullName||'',firstName:u.firstName||u.first_name||'',lastName:u.lastName||u.last_name||'',phone:u.phone||'',dob:u.dob||u.birthDate||null}}function read(){try{return clean(JSON.parse(localStorage.getItem(K)||'null'))}catch(e){return null}}function save(u){try{var c=clean(u);if(!c)return;localStorage.setItem(K,JSON.stringify(c));window.__AMIT_EARLY_SESSION__=c}catch(e){}}window.__AMIT_SAVE_DEVICE_SESSION__=save;window.__AMIT_EARLY_SESSION__=read();window.__AMIT_BOOT_SESSION_PROMISE__=(async function(){try{var r=await fetch('/api/session',{credentials:'same-origin',cache:'no-store'});if(r.ok){var d=await r.json();if(d&&d.authenticated&&d.customer){var c=clean(d.customer);if(c){save(c);return c}}}}catch(e){}var s=window.__AMIT_EARLY_SESSION__;if(s&&s.id&&s.name&&s.phone){try{var lr=await fetch('/api/login',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:s.name,phone:s.phone})});if(lr.ok){var ld=await lr.json();if(ld&&ld.role==='customer'&&ld.customer){var c2=clean(ld.customer);if(c2){save(c2);return c2}}}}catch(e){}}return s||null})();})();</script>`;
 
-  const critical=`<style id="amit-boot-critical">
-    ${handFont?`@font-face{font-family:'GveretLevin';src:url('${handFont}') format('woff2');font-weight:100 900;font-style:normal;font-display:block}`:''}
-    html.amit-booting,html.amit-booting body{margin:0!important;width:100%!important;height:100%!important;overflow:hidden!important;background:#fbf5ef!important}
-    html.amit-booting body>*:not(#amit-boot-splash){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
-    #splash{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
-    #amit-boot-splash{position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:stretch!important;justify-content:center!important;overflow:hidden!important;background:#fbf5ef${bootBg?` url('${bootBg}') center/cover no-repeat`:''}!important;opacity:1!important;visibility:visible!important;transition:none!important}
-    #amit-boot-splash .amit-boot-inner{width:min(430px,100%)!important;height:100%!important;display:flex!important;flex-direction:column!important;align-items:center!important;text-align:center!important;padding:0 22px!important;box-sizing:border-box!important}
-    #amit-boot-splash .amit-boot-logo{display:block!important;width:min(335px,84vw)!important;max-height:43vh!important;object-fit:contain!important;margin:12.5vh auto 0!important;background:transparent!important}
-    #amit-boot-splash .amit-boot-copy{display:flex!important;flex-direction:column!important;align-items:center!important;margin:36px 0 0!important;color:#285f5a!important;font-family:'GveretLevin',cursive!important;font-size:25px!important;line-height:1.55!important;font-weight:100!important;direction:rtl!important}
-    #amit-boot-splash .amit-boot-line{display:block!important;white-space:nowrap!important;font-family:'GveretLevin',cursive!important;font-size:25px!important;line-height:1.55!important;font-weight:100!important;color:#285f5a!important}
-    #amit-boot-splash .amit-boot-heart{display:block!important;width:42px!important;height:42px!important;margin:20px auto 0!important;object-fit:contain!important}
-  </style>`;
+  const critical=`<style id="amit-boot-critical">${handFont?`@font-face{font-family:'GveretLevin';src:url('${handFont}') format('woff2');font-weight:100 900;font-style:normal;font-display:block}`:''}html.amit-booting,html.amit-booting body{margin:0!important;width:100%!important;height:100%!important;overflow:hidden!important;background:#fbf5ef!important}html.amit-booting body>*:not(#amit-boot-splash){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}#splash{display:none!important}#amit-boot-splash{position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;justify-content:center!important;background:#fbf5ef url('${bg}') center/cover no-repeat!important;opacity:1!important;visibility:visible!important;transition:none!important}#amit-boot-splash .amit-boot-inner{width:min(430px,100%)!important;height:100%!important;display:flex!important;flex-direction:column!important;align-items:center!important;text-align:center!important;padding:0 22px!important;box-sizing:border-box!important}#amit-boot-splash .amit-boot-logo{display:block!important;width:min(335px,84vw)!important;max-height:43vh!important;object-fit:contain!important;margin:12.5vh auto 0!important}#amit-boot-splash .amit-boot-copy,#amit-boot-splash .amit-boot-line{font-family:'GveretLevin'!important;font-size:25px!important;line-height:1.55!important;font-weight:400!important;font-style:normal!important;font-synthesis:none!important;color:#285f5a!important;direction:rtl!important}#amit-boot-splash .amit-boot-copy{display:flex!important;flex-direction:column!important;align-items:center!important;margin:36px 0 0!important}#amit-boot-splash .amit-boot-line{display:block!important;white-space:nowrap!important}#amit-boot-splash .amit-boot-heart{display:block!important;width:42px!important;height:42px!important;margin:20px auto 0!important;object-fit:contain!important}</style>`;
   html=html.replace('</head>',bootHead+critical+'</head>');
+  html=html.replace('<body>',`<body><div id="amit-boot-splash" aria-live="polite"><div class="amit-boot-inner"><img class="amit-boot-logo" src="${logo}" alt="AMIT TOUCH"><div class="amit-boot-copy"><span class="amit-boot-line">הטאץ׳ הקטן שעושה</span><span class="amit-boot-line">את כל ההבדל</span></div><img class="amit-boot-heart" src="${heart}" alt=""></div></div>`);
 
-  const bootMarkup=`<div id="amit-boot-splash" aria-live="polite"><div class="amit-boot-inner"><img class="amit-boot-logo" src="${bootLogo}" alt="AMIT TOUCH"><div class="amit-boot-copy"><span class="amit-boot-line">הטאץ׳ הקטן שעושה</span><span class="amit-boot-line">את כל ההבדל</span></div><img class="amit-boot-heart" src="${bootHeart}" alt=""></div></div>`;
-  html=html.replace('<body>','<body>'+bootMarkup);
-
-  const runtime=`<script>(function(){
-    const build='${build}',root=document.documentElement;
-    function setCustomer(u){if(!u||!u.id)return false;try{user=u}catch(_){}window.user=u;try{window.__AMIT_SAVE_DEVICE_SESSION__?.(u)}catch(_){}return true}
-    function forceDestination(saved){
-      const screens=document.querySelectorAll('.screen');
-      screens.forEach(x=>x.classList.remove('active'));
-      if(saved&&saved.id){
-        setCustomer(saved);
-        try{window.enterApp?.()}catch(_){}
-        screens.forEach(x=>x.classList.remove('active'));
-        document.getElementById('home')?.classList.add('active');
-        document.getElementById('nav')?.classList.add('show');
-        try{window.renderHomeAppointments?.();window.renderNext?.()}catch(_){}
-        return;
-      }
-      document.getElementById('nav')?.classList.remove('show');
-      document.getElementById('login')?.classList.add('active');
-    }
-    function preloadImages(){
-      const urls=['/assets/amitouch_logo_vector.png','/assets/home-hero-final.webp','/assets/home-icon-menu.svg','/assets/home-icon-profile-top.svg','/assets/home-nav-appointments.svg','/assets/amit-touch-heart.svg'];
-      return Promise.all(urls.map(src=>new Promise(resolve=>{const i=new Image();i.onload=i.onerror=()=>resolve();i.src=src+'?v='+build;})));
-    }
-    async function finishBoot(){
-      let saved=window.__AMIT_EARLY_SESSION__||null;
-      try{if(window.__AMIT_BOOT_SESSION_PROMISE__)saved=await window.__AMIT_BOOT_SESSION_PROMISE__||saved}catch(_){}
-      try{if(window.__AMIT_SESSION_READY__)await window.__AMIT_SESSION_READY__}catch(_){}
-      saved=window.__AMIT_EARLY_SESSION__||saved;
-      forceDestination(saved);
-      try{await Promise.race([Promise.all([document.fonts?.ready||Promise.resolve(),preloadImages()]),new Promise(r=>setTimeout(r,4500))])}catch(_){}
-      await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-      forceDestination(window.__AMIT_EARLY_SESSION__||saved);
-      const overlay=document.getElementById('amit-boot-splash');
-      root.classList.remove('amit-booting');
-      overlay?.remove();
-      document.body.style.overflow='';
-    }
-    function loadSequential(files){let i=0;function next(){if(i>=files.length){finishBoot();return}const item=files[i++];document.querySelectorAll('script[data-amit="'+item[1]+'"]').forEach(x=>x.remove());const s=document.createElement('script');s.src=item[0]+'?v='+build;s.dataset.amit=item[1];s.async=false;s.onload=next;s.onerror=next;document.body.appendChild(s)}next()}
-    function boot(){loadSequential([
-      ['/brand-assets.js','brand-assets'],['/global-notice.js','global-notice'],['/app-db.js','app-db'],['/cancellation-policy.js','cancellation-policy'],['/login-polish.js','login'],['/login-runtime-fix.js','login-runtime-fix'],['/register-polish.js','register'],['/register-age-check.js','register-age'],['/register-notice.js','register-notice'],['/admin-login.js','admin'],['/admin-ui.js','admin-ui'],['/admin-announcements.js','admin-announcements'],['/home-polish.js','home'],['/home-hero-reference.js','home-hero-reference'],['/home-services-slider.js','home-services-slider'],['/home-appointments-section.js','home-appointments-section'],['/home-announcements.js','home-announcements'],['/customer-notifications.js','customer-notifications'],['/about-page.js','about-page'],['/profile-page.js','profile-page'],['/preference-switch-fix.js','preference-switch-fix'],['/services-page.js','services-page'],['/service-detail-reference.js','service-detail-reference'],['/locked-static-pages.js','locked-static-pages'],['/nav-polish.js','bottom-nav'],['/login-home-guard.js','login-home-guard'],['/booking-runtime-fix.js','booking-runtime-fix'],['/booking-direction-fix.js','booking-direction-fix'],['/reference-booking-upload.js','reference-booking-upload'],['/font-minimum-16.js','font-minimum-16'],['/post-font-layout-fix.js','post-font-layout-fix'],['/auth-visual-fix.js','auth-visual-fix'],['/booking-confirmation-polish.js','booking-confirmation-polish'],['/gallery-page.js','gallery-page'],['/booking-controller.js','booking-controller'],['/pwa-install-prompt.js','pwa-install-prompt'],['/responsive-runtime.js','responsive-runtime'],['/session-persistence.js','session-persistence']
-    ])}
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  })();</script>`;
+  const runtime=`<script>(function(){const build='${build}',root=document.documentElement;function setCustomer(u){if(!u||!u.id)return false;try{user=u}catch(_){}window.user=u;try{window.__AMIT_SAVE_DEVICE_SESSION__?.(u)}catch(_){}return true}function forceDestination(saved){const screens=document.querySelectorAll('.screen');screens.forEach(x=>x.classList.remove('active'));if(saved&&saved.id){setCustomer(saved);try{window.enterApp?.()}catch(_){}screens.forEach(x=>x.classList.remove('active'));document.getElementById('home')?.classList.add('active');document.getElementById('nav')?.classList.add('show');try{window.renderHomeAppointments?.();window.renderNext?.()}catch(_){}return}document.getElementById('nav')?.classList.remove('show');document.getElementById('login')?.classList.add('active')}function preload(){const urls=['${logo}','${heart}','${bg}','/assets/home-hero-final.webp?v='+build];return Promise.all(urls.map(src=>new Promise(resolve=>{const i=new Image();i.onload=i.onerror=resolve;i.src=src})))}async function finishBoot(){let saved=window.__AMIT_EARLY_SESSION__||null;try{saved=await window.__AMIT_BOOT_SESSION_PROMISE__||saved}catch(_){}try{if(window.__AMIT_SESSION_READY__)await window.__AMIT_SESSION_READY__}catch(_){}saved=window.__AMIT_EARLY_SESSION__||saved;forceDestination(saved);try{await Promise.race([Promise.all([document.fonts.ready,preload()]),new Promise(r=>setTimeout(r,5000))])}catch(_){}await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));forceDestination(window.__AMIT_EARLY_SESSION__||saved);root.classList.remove('amit-booting');document.getElementById('amit-boot-splash')?.remove();document.body.style.overflow=''}function loadSequential(files){let i=0;function next(){if(i>=files.length){finishBoot();return}const item=files[i++];document.querySelectorAll('script[data-amit="'+item[1]+'"]').forEach(x=>x.remove());const s=document.createElement('script');s.src=item[0]+'?v='+build;s.dataset.amit=item[1];s.async=false;s.onload=next;s.onerror=next;document.body.appendChild(s)}next()}function boot(){loadSequential([['/brand-assets.js','brand-assets'],['/global-notice.js','global-notice'],['/app-db.js','app-db'],['/cancellation-policy.js','cancellation-policy'],['/login-polish.js','login'],['/login-runtime-fix.js','login-runtime-fix'],['/register-polish.js','register'],['/register-age-check.js','register-age'],['/register-notice.js','register-notice'],['/admin-login.js','admin'],['/admin-ui.js','admin-ui'],['/admin-announcements.js','admin-announcements'],['/home-polish.js','home'],['/home-hero-reference.js','home-hero-reference'],['/home-services-slider.js','home-services-slider'],['/home-appointments-section.js','home-appointments-section'],['/home-announcements.js','home-announcements'],['/customer-notifications.js','customer-notifications'],['/about-page.js','about-page'],['/profile-page.js','profile-page'],['/preference-switch-fix.js','preference-switch-fix'],['/services-page.js','services-page'],['/service-detail-reference.js','service-detail-reference'],['/locked-static-pages.js','locked-static-pages'],['/nav-polish.js','bottom-nav'],['/login-home-guard.js','login-home-guard'],['/booking-runtime-fix.js','booking-runtime-fix'],['/booking-direction-fix.js','booking-direction-fix'],['/reference-booking-upload.js','reference-booking-upload'],['/font-minimum-16.js','font-minimum-16'],['/post-font-layout-fix.js','post-font-layout-fix'],['/auth-visual-fix.js','auth-visual-fix'],['/booking-confirmation-polish.js','booking-confirmation-polish'],['/gallery-page.js','gallery-page'],['/booking-controller.js','booking-controller'],['/pwa-install-prompt.js','pwa-install-prompt'],['/responsive-runtime.js','responsive-runtime'],['/session-persistence.js','session-persistence']])}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot()})();</script>`;
   html=html.replace('</body>',runtime+'</body>');
   return isBuffer?Buffer.from(html,'utf8'):html;
 };
