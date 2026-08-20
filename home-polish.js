@@ -1,5 +1,5 @@
 (function(){
-  const BUILD='20260819-home-book-liquid-glass-scroll-v10';
+  const BUILD='20260820-home-real-first-name-v11';
   const home=document.getElementById('home');if(!home)return;document.getElementById('amit-home-polish')?.remove();
   const style=document.createElement('style');style.id='amit-home-polish';style.textContent=`
   html,body{overflow-x:hidden!important;overflow-y:auto!important;touch-action:pan-y!important;-webkit-overflow-scrolling:touch!important}body{position:static!important;height:auto!important;min-height:100%!important}#home{padding:0 0 110px!important;margin:0!important;color:#07584f!important;overflow:visible!important;min-height:100vh!important;height:auto!important;touch-action:pan-y!important;background:#fff9f5!important}
@@ -16,8 +16,8 @@
   #home .spark,#home .star,#home .stars,#home .sparkle,#home .sparkles,#home [class*="spark"],#home [class*="star"]{display:none!important;visibility:hidden!important;opacity:0!important}
   `;document.head.appendChild(style);
   const logo=home.querySelector('.logo');if(logo)logo.src=`/assets/amitouch_logo_vector.png?v=${BUILD}`;
-  function firstName(){try{if(typeof user!=='undefined'&&user)return user.firstName||String(user.name||'').trim().split(/\s+/)[0]||''}catch(_){}try{const raw=localStorage.getItem('user')||localStorage.getItem('amitUser')||sessionStorage.getItem('user');if(raw){const u=JSON.parse(raw);return u.firstName||String(u.name||'').trim().split(/\s+/)[0]||''}}catch(_){}return''}
-  function refreshGreeting(){const e=home.querySelector('.hero-copy');if(!e)return;const n=firstName();e.innerHTML=`<span class="hero-name">${n||'שם פרטי'}</span><span class="hero-welcome">ברוכה הבאה</span><strong class="hero-touch">לטאץ׳ שלך</strong><span class="home-heart" aria-hidden="true"></span>`}refreshGreeting();new MutationObserver(()=>{if(home.classList.contains('active'))refreshGreeting()}).observe(home,{attributes:true,attributeFilter:['class']});
+  function firstName(){let u=null;try{if(typeof user!=='undefined'&&user)u=user}catch(_){}if(!u&&window.user)u=window.user;if(u){const direct=String(u.firstName||u.first_name||'').trim();if(direct)return direct;const full=String(u.name||u.fullName||u.full_name||'').trim();if(full)return full.split(/\s+/)[0];}return''}
+  function refreshGreeting(){const e=home.querySelector('.hero-copy');if(!e)return;const n=firstName();if(!n)return;e.innerHTML=`<span class="hero-name">${n}</span><span class="hero-welcome">ברוכה הבאה</span><strong class="hero-touch">לטאץ׳ שלך</strong><span class="home-heart" aria-hidden="true"></span>`}refreshGreeting();new MutationObserver(()=>{if(home.classList.contains('active'))refreshGreeting()}).observe(home,{attributes:true,attributeFilter:['class']});
   const primary=home.querySelector('.primary');if(primary)primary.innerHTML=`<img class="home-book-icon" src="/assets/home-nav-appointments.svg?v=${BUILD}" alt=""><span>הזמיני תור</span>`;
   const titles=home.querySelectorAll('.section-title');if(titles[0])titles[0].textContent='השירותים שלי';if(titles[1])titles[1].textContent='הזמנה אחרונה';
   const labels=['עיצוב והסרת','ג׳ל לק','מניקור','בניית ציפורניים'];home.querySelectorAll('.quick').forEach((e,i)=>{const b=e.querySelector('b');if(b&&labels[i])b.textContent=labels[i]});
