@@ -17,16 +17,23 @@
       extra:extras.map(x=>x.name).filter(Boolean).join(', '),eventId:row.google_event_id,status:row.status
     };
   }
+  function enterSafely(){
+    if(typeof window.enterApp==='function')return window.enterApp();
+    try{document.getElementById('nav')?.classList.add('show');}catch(_){}
+    if(typeof window.show==='function')return window.show('home');
+    const login=document.getElementById('login'),home=document.getElementById('home');
+    login?.classList.remove('active');home?.classList.add('active');
+  }
   function install(){
     const name=document.getElementById('loginName');
     const phoneInput=document.getElementById('loginPhone');
-    if(!name||!phoneInput||typeof window.enterApp!=='function')return setTimeout(install,50);
+    if(!name||!phoneInput)return setTimeout(install,50);
     window.login=async function(){
       const fullName=cleanName(name.value);
       const phone=cleanPhone(phoneInput.value);
       if(!fullName||phone.length<9)return alert('יש למלא שם מלא ומספר נייד');
       try{
-        const response=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName,phone})});
+        const response=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',body:JSON.stringify({fullName,phone})});
         const data=await response.json().catch(()=>({}));
         if(response.status===404){
           const parts=fullName.split(' ');
@@ -34,7 +41,7 @@
           if(first)first.value=parts.shift()||'';
           if(last)last.value=parts.join(' ');
           if(regPhone)regPhone.value=phone;
-          show('register');
+          if(typeof window.show==='function')window.show('register');
           return;
         }
         if(response.status===401)return alert('השם ומספר הטלפון לא תואמים לחשבון הרשום');
@@ -42,13 +49,13 @@
         if(!response.ok)throw new Error(data.error||'LOGIN_FAILED');
         if(data.role==='admin')return;
         if(!data.customer||!data.customer.id)throw new Error('INVALID_CUSTOMER_RESPONSE');
-        user={id:data.customer.id,name:data.customer.fullName,firstName:data.customer.firstName,lastName:data.customer.lastName,phone:data.customer.phone,dob:data.customer.birthDate};
-        appointments=[];
-        window.enterApp();
-        fetch('/api/customers/'+encodeURIComponent(user.id)+'/appointments')
+        window.user={id:data.customer.id,name:data.customer.fullName,firstName:data.customer.firstName,lastName:data.customer.lastName,phone:data.customer.phone,dob:data.customer.birthDate};
+        window.appointments=[];
+        enterSafely();
+        fetch('/api/customers/'+encodeURIComponent(window.user.id)+'/appointments',{cache:'no-store'})
           .then(r=>r.ok?r.json():Promise.reject(new Error('APPOINTMENTS_FAILED')))
           .then(result=>{
-            appointments=(result.appointments||[]).filter(x=>x.status!=='cancelled').map(mapAppointment);
+            window.appointments=(result.appointments||[]).filter(x=>x.status!=='cancelled').map(mapAppointment);
             window.renderNext?.();
           })
           .catch(error=>console.warn('Signed in successfully; appointments will retry later.',error));
@@ -58,5 +65,5 @@
       }
     };
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,0));else setTimeout(install,0);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(install,0),{once:true});else setTimeout(install,0);
 })();
