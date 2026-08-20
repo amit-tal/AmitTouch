@@ -68,6 +68,10 @@ const approvalUpdateOriginal = "const { data: updated, error: updateError } = aw
 const approvalUpdateSafe = "const { data: updated, error: updateError } = await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', appointment.id).select().single(); if (updateError) throw updateError; try { await syncApprovedAppointmentToIcloud(updated, customer); } catch (icloudError) { console.error('iCloud approval sync failed', icloudError); } try { await supabase.from('customer_notifications').insert({ customer_id: appointment.customer_id, appointment_id: appointment.id, type: 'appointment_approved', title: 'התור אושר', body: 'התור שלך אושר ונקבע ביומן.' }); } catch (notificationError) { console.error('Approval notification failed', notificationError); }";
 source = source.replace(approvalUpdateOriginal, approvalUpdateSafe);
 
+const icloudBusyOriginal = "const icloudBusy = await getIcloudBusyPeriods(expandedMin, expandedMax);";
+const icloudBusySafe = "const icloudBusy = await Promise.race([getIcloudBusyPeriods(expandedMin, expandedMax), new Promise(resolve => setTimeout(() => resolve({ calendars: 0, busy: [] }), 5000))]);";
+source = source.replace(icloudBusyOriginal, icloudBusySafe);
+
 fs.writeFileSync(runtimePath, source, 'utf8');
 await import(pathToFileURL(runtimePath).href + '?v=' + Date.now());
 await import('./preload.js');
