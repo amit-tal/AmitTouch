@@ -1,5 +1,5 @@
 (function(){
-  const BUILD='20260820-customer-notifications-v1';
+  const BUILD='20260820-customer-notifications-v2';
   const home=document.getElementById('home');
   if(!home)return;
 
@@ -35,22 +35,21 @@
   function seenKey(){return 'amit-touch-notifications-seen-'+String(currentCustomerId()||'guest')}
   function seenAt(){return Number(localStorage.getItem(seenKey())||0)}
   function markSeen(){localStorage.setItem(seenKey(),String(Date.now()));bell.classList.remove('has-unread')}
-  function age(date){const ms=Date.now()-new Date(date).getTime();if(!Number.isFinite(ms)||ms<0)return'';const d=Math.floor(ms/86400000);if(d>0)return d===1?'יום':' '+d+' ימים';const h=Math.floor(ms/3600000);if(h>0)return h===1?'שעה':' '+h+' שעות';const m=Math.max(1,Math.floor(ms/60000));return m===1?'דקה':' '+m+' דקות'}
+  function age(date){const ms=Date.now()-new Date(date).getTime();if(!Number.isFinite(ms)||ms<0)return'';const d=Math.floor(ms/86400000);if(d>0)return d===1?'יום':d+' ימים';const h=Math.floor(ms/3600000);if(h>0)return h===1?'שעה':h+' שעות';const m=Math.max(1,Math.floor(ms/60000));return m===1?'דקה':m+' דקות'}
   async function fetchNotifications(){
-    const customerId=currentCustomerId();
-    if(!customerId)return[];
-    const r=await fetch('/api/customers/'+encodeURIComponent(customerId)+'/notifications?v='+BUILD,{cache:'no-store'});
+    if(!currentCustomerId())return[];
+    const r=await fetch('/api/announcements?v='+BUILD,{cache:'no-store'});
     const data=await r.json();
     if(!r.ok)throw new Error(data.error||'NOTIFICATIONS_FAILED');
-    return data.notifications||[];
+    return data.announcements||[];
   }
-  async function updateDot(){try{const items=await fetchNotifications();const last=seenAt();bell.classList.toggle('has-unread',items.some(n=>new Date(n.created_at).getTime()>last))}catch(_){}}
+  async function updateDot(){try{const items=await fetchNotifications();const last=seenAt();bell.classList.toggle('has-unread',items.some(n=>new Date(n.created_at).getTime()>last))}catch(_){bell.classList.remove('has-unread')}}
   async function openNotifications(){
     let page=document.querySelector('.customer-notifications-page');if(page)page.remove();
     page=document.createElement('section');page.className='customer-notifications-page';
     page.innerHTML='<div class="customer-notifications-head"><button class="customer-notifications-back" type="button" aria-label="חזרה">‹</button><h2>הודעות</h2><span></span></div><div class="customer-notifications-list"><div class="customer-notifications-empty">טוענת הודעות…</div></div>';
     document.body.appendChild(page);page.querySelector('.customer-notifications-back').onclick=()=>page.remove();
-    try{const items=await fetchNotifications();const list=page.querySelector('.customer-notifications-list');list.innerHTML=items.length?items.map(n=>`<article class="customer-notice"><div><h3>${String(n.title||'הודעה')}</h3><p>${String(n.body||'')}</p></div><div class="customer-notice-age">${age(n.created_at)}</div></article>`).join(''):'<div class="customer-notifications-empty">אין לך הודעות כרגע</div>';markSeen()}catch(e){page.querySelector('.customer-notifications-list').innerHTML='<div class="customer-notifications-empty">לא הצלחתי לטעון את ההודעות</div>'}
+    try{const items=await fetchNotifications();const list=page.querySelector('.customer-notifications-list');list.innerHTML=items.length?items.map(n=>`<article class="customer-notice"><div><h3>${String(n.title||'הודעה')}</h3><p>${String(n.body||'')}</p></div><div class="customer-notice-age">${age(n.created_at)}</div></article>`).join(''):'<div class="customer-notifications-empty">אין לך הודעות כרגע</div>';markSeen()}catch(e){page.querySelector('.customer-notifications-list').innerHTML='<div class="customer-notifications-empty">אין לך הודעות כרגע</div>';bell.classList.remove('has-unread')}
   }
   bell.addEventListener('click',openNotifications);
   window.refreshCustomerNotifications=updateDot;
