@@ -11,6 +11,85 @@ function replaceRequired(input, before, after, label) {
   return input.replace(before, after);
 }
 
+// The runtime needs a real persistent, signed device session. A cookie survives refreshes
+// and complete PWA closes, unlike an in-memory JS user object.
+source = source.replace("import fs from 'fs';", "import fs from 'fs';\nimport crypto from 'node:crypto';");
+
+const sessionRuntime = String.raw`
+const AMIT_SESSION_COOKIE = 'amit_touch_customer';
+const AMIT_SESSION_MAX_AGE = 60 * 60 * 24 * 365 * 5;
+function amitSessionSecret() {
+  return String(process.env.AMIT_SESSION_SECRET || process.env.SUPABASE_SECRET_KEY || 'amit-touch-device-session');
+}
+function amitEncodeSession(customerId) {
+  const payload = Buffer.from(JSON.stringify({ id: String(customerId), v: 1 }), 'utf8').toString('base64url');
+  const sig = crypto.createHmac('sha256', amitSessionSecret()).update(payload).digest('base64url');
+  return payload + '.' + sig;
+}
+function amitDecodeSession(token) {
+  try {
+    const parts = String(token || '').split('.');
+    if (parts.length !== 2) return null;
+    const expected = crypto.createHmac('sha256', amitSessionSecret()).update(parts[0]).digest('base64url');
+    const a = Buffer.from(parts[1]);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+    const parsed = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+    return parsed && parsed.id ? String(parsed.id) : null;
+  } catch (_) { return null; }
+}
+function amitCookie(req, name) {
+  const raw = String(req.headers.cookie || '');
+  for (const part of raw.split(';')) {
+    const at = part.indexOf('=');
+    if (at < 0) continue;
+    if (part.slice(0, at).trim() === name) return decodeURIComponent(part.slice(at + 1).trim());
+  }
+  return '';
+}
+function setCustomerSessionCookie(res, customerId) {
+  const value = encodeURIComponent(amitEncodeSession(customerId));
+  res.append('Set-Cookie', AMIT_SESSION_COOKIE + '=' + value + '; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=' + AMIT_SESSION_MAX_AGE);
+}
+function clearCustomerSessionCookie(res) {
+  res.append('Set-Cookie', AMIT_SESSION_COOKIE + '=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
+}
+function customerPayload(customer) {
+  return { id: customer.id, firstName: customer.first_name, lastName: customer.last_name, fullName: (String(customer.first_name || '') + ' ' + String(customer.last_name || '')).trim(), phone: customer.phone, birthDate: customer.birth_date };
+}
+app.get('/api/session', async (req, res) => {
+  try {
+    const customerId = amitDecodeSession(amitCookie(req, AMIT_SESSION_COOKIE));
+    if (!customerId) return res.status(401).json({ authenticated: false });
+    const supabase = supabaseClient();
+    const customer = await getCustomer(supabase, customerId);
+    if (!customer) { clearCustomerSessionCookie(res); return res.status(401).json({ authenticated: false }); }
+    res.set('Cache-Control', 'no-store');
+    res.json({ authenticated: true, customer: customerPayload(customer) });
+  } catch (error) { console.error('Session restore failed', error); res.status(500).json({ authenticated: false }); }
+});
+app.post('/api/logout', (_req, res) => {
+  clearCustomerSessionCookie(res);
+  res.set('Cache-Control', 'no-store');
+  res.json({ ok: true });
+});
+`;
+source = source.replace("app.get('/', (_req, res) => {", sessionRuntime + "\napp.get('/', (_req, res) => {");
+
+// Do not load app-db/admin-ui once from the server and then a second time from preload.
+// That duplicate initialization was resetting UI state and was one source of the visible boot jumps.
+const duplicateBootstrap = "const pwaScript = `<script src=\"/app-db.js\"></script><script src=\"/admin-ui.js\"></script><script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));</script>`;";
+const singleBootstrap = "const pwaScript = `<script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.error));</script>`;";
+source = replaceRequired(source, duplicateBootstrap, singleBootstrap, 'duplicate client bootstrap');
+
+// Persist the customer cookie at the same moment the server accepts login/registration.
+const registerResponse = "res.status(201).json({ ok: true, customer: { id: customer.id, firstName: customer.first_name, lastName: customer.last_name, fullName: `${customer.first_name} ${customer.last_name}`, phone: customer.phone, birthDate: customer.birth_date } });";
+source = replaceRequired(source, registerResponse, "setCustomerSessionCookie(res, customer.id); " + registerResponse, 'registration session cookie');
+const loginResponse = "res.json({ ok: true, role: 'customer', customer: { id: customer.id, firstName: customer.first_name, lastName: customer.last_name, fullName: storedName, phone: customer.phone, birthDate: customer.birth_date } });";
+source = replaceRequired(source, loginResponse, "setCustomerSessionCookie(res, customer.id); " + loginResponse, 'login session cookie');
+const adminResponse = "return res.json({ ok: true, role: 'admin', customer: null });";
+source = source.replace(adminResponse, "clearCustomerSessionCookie(res); " + adminResponse);
+
 const helper = String.raw`
 async function syncApprovedAppointmentToIcloud(appointment, customer) {
   if (!icloudConfigured() || !appointment || !customer) return false;
@@ -104,5 +183,6 @@ const newResponse = [
 source = replaceRequired(source, oldResponse, newResponse, 'booking response');
 
 fs.writeFileSync(runtimePath, source, 'utf8');
-await import(pathToFileURL(runtimePath).href + '?v=' + Date.now());
+// Install the HTML preload patch before the Express runtime can serve the first request.
 await import('./preload.js');
+await import(pathToFileURL(runtimePath).href + '?v=' + Date.now());
