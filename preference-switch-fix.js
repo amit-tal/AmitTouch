@@ -3,7 +3,7 @@
   document.getElementById(id)?.remove();
   const style=document.createElement('style');
   style.id=id;
-  const checkSvg=`data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path d="M4.6 9.1 7.7 12.1 13.4 6.1" fill="none" stroke="#07584f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`)}`;
+  const checkSvg=`data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18"><path d="M4.6 8.3 7.7 11.3 13.4 5.3" fill="none" stroke="#07584f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`)}`;
   style.textContent=`
     #profile .preference-switch:before{content:none!important;display:none!important}
     #profile .preference-switch:after{
