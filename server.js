@@ -60,9 +60,13 @@ if (!source.includes('syncApprovedAppointmentToIcloud(')) {
   source = source.replace(routeMarker, helper + '\n' + routeMarker);
 }
 
-const approvalMarker = "if (updateError) throw updateError; await supabase.from('customer_notifications').insert({ customer_id: appointment.customer_id, appointment_id: appointment.id, type: 'appointment_approved', title: 'התור אושר', body: 'התור שלך אושר ונקבע ביומן.' });";
-const approvalReplacement = "if (updateError) throw updateError; try { await syncApprovedAppointmentToIcloud(updated, customer); } catch (icloudError) { console.error('iCloud approval sync failed', icloudError); } await supabase.from('customer_notifications').insert({ customer_id: appointment.customer_id, appointment_id: appointment.id, type: 'appointment_approved', title: 'התור אושר', body: 'התור שלך אושר ונקבע ביומן.' });";
-source = source.replace(approvalMarker, approvalReplacement);
+const googlePatchOriginal = "if (appointment.google_event_id && customer) await calendarClient().events.patch({ calendarId: CALENDAR_ID, eventId: appointment.google_event_id, requestBody: { summary: `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${appointment.service_name}`, description: `סטטוס: confirmed\\nלקוחה: ${customer.first_name} ${customer.last_name}\\nנייד: ${customer.phone}\\nטיפול: ${appointment.service_name}` } });";
+const googlePatchSafe = "if (appointment.google_event_id && customer) try { await calendarClient().events.patch({ calendarId: CALENDAR_ID, eventId: appointment.google_event_id, requestBody: { summary: `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${appointment.service_name}`, description: `סטטוס: confirmed\\nלקוחה: ${customer.first_name} ${customer.last_name}\\nנייד: ${customer.phone}\\nטיפול: ${appointment.service_name}` } }); } catch (googleError) { console.error('Google approval sync failed', googleError); }";
+source = source.replace(googlePatchOriginal, googlePatchSafe);
+
+const approvalUpdateOriginal = "const { data: updated, error: updateError } = await supabase.from('appointments').update({ status: 'confirmed', approved_at: new Date().toISOString() }).eq('id', appointment.id).select().single(); if (updateError) throw updateError; await supabase.from('customer_notifications').insert({ customer_id: appointment.customer_id, appointment_id: appointment.id, type: 'appointment_approved', title: 'התור אושר', body: 'התור שלך אושר ונקבע ביומן.' });";
+const approvalUpdateSafe = "const { data: updated, error: updateError } = await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', appointment.id).select().single(); if (updateError) throw updateError; try { await syncApprovedAppointmentToIcloud(updated, customer); } catch (icloudError) { console.error('iCloud approval sync failed', icloudError); } try { await supabase.from('customer_notifications').insert({ customer_id: appointment.customer_id, appointment_id: appointment.id, type: 'appointment_approved', title: 'התור אושר', body: 'התור שלך אושר ונקבע ביומן.' }); } catch (notificationError) { console.error('Approval notification failed', notificationError); }";
+source = source.replace(approvalUpdateOriginal, approvalUpdateSafe);
 
 fs.writeFileSync(runtimePath, source, 'utf8');
 await import(pathToFileURL(runtimePath).href + '?v=' + Date.now());
