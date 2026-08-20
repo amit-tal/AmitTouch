@@ -1,36 +1,36 @@
 (function(){
-  const BUILD='20260820-booking-ref-v3';
+  const BUILD='20260820-booking-ref-v4';
   const MONTHS=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
   function getUser(){try{if(window.user&&window.user.id)return window.user;}catch(_){}try{if(typeof user!=='undefined'&&user&&user.id)return user;}catch(_){}return null;}
   function jerusalemNow(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());const map=Object.fromEntries(parts.map(p=>[p.type,p.value]));return{date:`${map.year}-${map.month}-${map.day}`,minutes:Number(map.hour)*60+Number(map.minute)};}
   function isPastDate(date){return String(date)<jerusalemNow().date;}
   function isPastSlot(date,time){const now=jerusalemNow();if(String(date)<now.date)return true;if(String(date)>now.date)return false;const[h,m]=String(time||'00:00').split(':').map(Number);return h*60+m<=now.minutes;}
   function installStyle(){document.getElementById('amit-booking-runtime-style')?.remove();const style=document.createElement('style');style.id='amit-booking-runtime-style';style.textContent=`
-    #book{height:calc(100dvh - 82px)!important;max-height:calc(100dvh - 82px)!important;overflow:hidden!important;padding:8px 14px 14px!important;box-sizing:border-box!important;direction:rtl!important}
-    #book .top{height:45px!important;min-height:45px!important;display:grid!important;grid-template-columns:38px 1fr 38px!important;align-items:center!important;margin:0!important}
-    #book .top b{font-size:15px!important;font-weight:500!important;color:#173f3c!important;text-align:center!important}
-    #book .top .round{width:36px!important;height:36px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#315f5a!important;font-size:0!important;padding:0!important}
-    #book .top .round:before{content:'→'!important;font-size:23px!important;font-weight:300!important}
-    #book .booking-month-nav{display:grid!important;grid-template-columns:34px 1fr 34px!important;align-items:center!important;margin:6px 0 7px!important;direction:rtl!important}
-    #book .booking-month-nav button{width:34px!important;height:32px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#315f5a!important;font-size:21px!important;font-weight:300!important;padding:0!important;box-shadow:none!important}
+    #book{height:calc(100dvh - 82px)!important;max-height:calc(100dvh - 82px)!important;overflow:hidden!important;padding:12px 20px 18px!important;box-sizing:border-box!important;direction:rtl!important}
+    #book .top{height:52px!important;min-height:52px!important;display:grid!important;grid-template-columns:42px 1fr 42px!important;align-items:center!important;margin:0 0 5px!important}
+    #book .top b{font-size:16px!important;font-weight:500!important;color:#173f3c!important;text-align:center!important}
+    #book .top .round{width:40px!important;height:40px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#315f5a!important;font-size:0!important;padding:0!important}
+    #book .top .round:before{content:'→'!important;font-size:24px!important;font-weight:300!important}
+    #book .booking-month-nav{display:grid!important;grid-template-columns:42px 1fr 42px!important;align-items:center!important;margin:8px 0 10px!important;direction:rtl!important}
+    #book .booking-month-nav button{width:40px!important;height:38px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#315f5a!important;font-size:23px!important;font-weight:300!important;padding:0!important;box-shadow:none!important}
     #book .booking-month-nav button[disabled]{opacity:.2!important}
-    #book .booking-month-title{text-align:center!important;font-size:14px!important;font-weight:500!important;color:#173f3c!important}
-    #book .week{display:grid!important;grid-template-columns:repeat(7,1fr)!important;text-align:center!important;font-size:9px!important;font-weight:500!important;color:#315f5a!important;margin:0 0 3px!important;height:21px!important;align-items:center!important}
-    #book .days{display:grid!important;grid-template-columns:repeat(7,1fr)!important;text-align:center!important;gap:0!important;margin:0!important}
-    #book .days>i{height:31px!important}
-    #book .day{width:31px!important;height:31px!important;min-height:31px!important;justify-self:center!important;border:0!important;border-radius:50%!important;background:transparent!important;color:#4c5c59!important;font-size:10px!important;font-weight:400!important;padding:0!important;box-shadow:none!important}
+    #book .booking-month-title{text-align:center!important;font-size:15px!important;font-weight:500!important;color:#173f3c!important}
+    #book .week{display:grid!important;grid-template-columns:repeat(7,1fr)!important;text-align:center!important;font-size:11px!important;font-weight:500!important;color:#315f5a!important;margin:0 0 6px!important;height:26px!important;align-items:center!important}
+    #book .days{display:grid!important;grid-template-columns:repeat(7,1fr)!important;text-align:center!important;row-gap:4px!important;column-gap:0!important;margin:0!important}
+    #book .days>i{height:36px!important}
+    #book .day{width:36px!important;height:36px!important;min-height:36px!important;justify-self:center!important;border:0!important;border-radius:50%!important;background:transparent!important;color:#4c5c59!important;font-size:12px!important;font-weight:400!important;padding:0!important;box-shadow:none!important}
     #book .day.sel{background:#397a73!important;color:#fff!important;box-shadow:0 5px 12px rgba(47,113,107,.18)!important}
     #book .day[disabled],#book .time[disabled]{opacity:.18!important;filter:none!important;cursor:not-allowed!important;pointer-events:none!important}
     #book .day.past{color:#9ca5a3!important;background:transparent!important}
-    #book #timeArea{margin-top:9px!important}
-    #book #timeArea h4{font-size:12px!important;font-weight:500!important;color:#315f5a!important;margin:0 0 8px!important;text-align:right!important}
-    #book .times{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:7px!important;direction:ltr!important}
-    #book .time{height:34px!important;padding:0 3px!important;border-radius:9px!important;border:1px solid rgba(47,113,107,.22)!important;background:rgba(255,255,255,.42)!important;color:#435b57!important;font-size:11px!important;font-weight:400!important;box-shadow:none!important}
+    #book #timeArea{margin-top:18px!important}
+    #book #timeArea h4{font-size:13px!important;font-weight:500!important;color:#315f5a!important;margin:0 0 10px!important;text-align:right!important}
+    #book .times{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:9px 8px!important;direction:ltr!important}
+    #book .time{height:38px!important;padding:0 4px!important;border-radius:10px!important;border:1px solid rgba(47,113,107,.22)!important;background:rgba(255,255,255,.42)!important;color:#435b57!important;font-size:12px!important;font-weight:400!important;box-shadow:none!important}
     #book .time.sel{background:#397a73!important;border-color:#397a73!important;color:#fff!important;box-shadow:0 4px 10px rgba(47,113,107,.15)!important}
-    #book #bookingContinue{height:48px!important;padding:0 14px!important;margin-top:16px!important;border-radius:8px!important;font-size:14px!important;font-weight:500!important;background:linear-gradient(90deg,#397a73,#28665f)!important;box-shadow:0 6px 14px rgba(47,113,107,.14)!important}
-    #book .booking-empty{padding:14px!important;text-align:center!important;color:#71817e!important;font-size:12px!important;margin-top:12px!important}
+    #book #bookingContinue{height:52px!important;padding:0 14px!important;margin-top:22px!important;border-radius:9px!important;font-size:15px!important;font-weight:500!important;background:linear-gradient(90deg,#397a73,#28665f)!important;box-shadow:0 6px 14px rgba(47,113,107,.14)!important}
+    #book .booking-empty{padding:16px!important;text-align:center!important;color:#71817e!important;font-size:12px!important;margin-top:16px!important}
     #book .primary[disabled]{opacity:.42!important;pointer-events:none!important;box-shadow:none!important}
-    @media(max-height:730px){#book .top{height:39px!important;min-height:39px!important}#book .booking-month-nav{margin:2px 0 3px!important}#book .days>i,#book .day{height:27px!important;min-height:27px!important}#book .day{width:27px!important}#book #timeArea{margin-top:5px!important}#book .time{height:31px!important}#book #bookingContinue{height:43px!important;margin-top:10px!important}}
+    @media(max-height:760px){#book{padding-top:8px!important}#book .top{height:45px!important;min-height:45px!important;margin-bottom:2px!important}#book .booking-month-nav{margin:4px 0 5px!important}#book .week{height:22px!important;margin-bottom:2px!important}#book .days{row-gap:1px!important}#book .days>i,#book .day{height:31px!important;min-height:31px!important}#book .day{width:31px!important;font-size:11px!important}#book #timeArea{margin-top:9px!important}#book .time{height:34px!important}#book #bookingContinue{height:46px!important;margin-top:13px!important}}
   `;document.head.appendChild(style);}
   let viewYear,viewMonth;
   window.calendar=function(){if(!booking?.service)return;if(typeof window.show==='function')window.show('book');const top=document.querySelector('#book .top');if(top){top.innerHTML='<button class="round" type="button" aria-label="חזרה"></button><b>בחירת תאריך ושעה</b><span></span>';top.querySelector('.round').onclick=()=>window.detail?window.detail(booking.service.id):window.services?.();}const now=new Date();viewYear=now.getFullYear();viewMonth=now.getMonth();renderCalendar();};
