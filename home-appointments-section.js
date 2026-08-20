@@ -1,6 +1,6 @@
 (function(){
  const home=document.getElementById('home');if(!home)return;
- const BUILD='20260820-home-appointments-calendar-v5';
+ const BUILD='20260820-home-appointments-calendar-title-v6';
  document.getElementById('amit-home-appointments-style')?.remove();
  const style=document.createElement('style');style.id='amit-home-appointments-style';style.textContent=`
  #home .appointments-stack,#home .appointment-block,#home .appointment-heading{background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important;border:0!important;outline:0!important;filter:none!important}
@@ -34,7 +34,7 @@
    if(!data?.date||!data?.time)return;
    const start=new Date(`${data.date}T${data.time}:00`);if(Number.isNaN(start.getTime()))return;
    const minutes=Number(data.minutes)||60;const end=new Date(start.getTime()+minutes*60000);
-   const title=`תור אצל AMIT TOUCH - ${data.service||'טיפול'}`;
+   const title=`תור אצל עמית ל - ${data.service||'טיפול'}`;
    const desc='תור שנקבע דרך AMIT TOUCH';
    const uid=`amit-touch-${data.id||start.getTime()}@amit-touch`;
    const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//AMIT TOUCH//Booking//HE','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',`UID:${uid}`,`DTSTAMP:${icsLocal(new Date())}`,`DTSTART:${icsLocal(start)}`,`DTEND:${icsLocal(end)}`,`SUMMARY:${escIcs(title)}`,`DESCRIPTION:${escIcs(desc)}`,'END:VEVENT','END:VCALENDAR'].join('\r\n');
