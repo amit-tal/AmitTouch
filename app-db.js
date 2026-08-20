@@ -1,28 +1,27 @@
-(function initFinalSplashOnly(){
-  const splash=document.getElementById('splash');
-  const guard=document.createElement('style');
-  guard.textContent=`.splash{opacity:0!important;visibility:visible!important;background:#fbf5ef!important}.splash.brand-ready{opacity:1!important}.splash.hide{opacity:0!important;visibility:hidden!important}.splash .brush-stroke,.splash .brush-handle{display:none!important}.splash-heart img{display:block;width:46px;height:46px;object-fit:contain;margin:0 auto}`;
-  document.head.appendChild(guard);
-  if(splash){
-    const logo=splash.querySelector('.splash-logo');
-    const tag=splash.querySelector('.splash-tag');
-    const heart=splash.querySelector('.splash-heart');
-    if(logo) logo.src='/assets/amit-touch-logo.svg?v=20260814';
-    if(tag) tag.textContent='הטאץ׳ הקטן שעושה את כל ההבדל';
-    if(heart) heart.innerHTML='<img src="/assets/amit-touch-heart.svg?v=20260814" alt="">';
-  }
-  const brandScript=document.createElement('script');
-  brandScript.src='/brand-assets.js?v=20260814b';
-  brandScript.onload=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{if(splash)splash.classList.add('brand-ready')}));
-  brandScript.onerror=()=>{if(splash){splash.style.background='#fbf5ef';splash.classList.add('brand-ready')}};
-  document.head.appendChild(brandScript);
-})();
-
 (function () {
   function cleanPhoneValue(value) {
     let phone = String(value || '').replace(/\D/g, '');
     if (phone.startsWith('972') && phone.length >= 11) phone = '0' + phone.slice(3);
     return phone;
+  }
+
+  function persistCustomer(userValue) {
+    if (!userValue || !userValue.id || userValue.admin) return;
+    const clean = {
+      id: userValue.id,
+      name: userValue.name || '',
+      firstName: userValue.firstName || userValue.first_name || '',
+      lastName: userValue.lastName || userValue.last_name || '',
+      phone: userValue.phone || '',
+      dob: userValue.dob || userValue.birthDate || null
+    };
+    try {
+      localStorage.setItem('amit-touch-signed-in-customer-v3', JSON.stringify(clean));
+      localStorage.removeItem('amit-touch-signed-in-customer-v2');
+      localStorage.removeItem('amit-touch-signed-in-customer-v1');
+    } catch (_) {}
+    try { window.__AMIT_SAVE_DEVICE_SESSION__?.(clean); } catch (_) {}
+    try { window.AMIT_TOUCH_PERSIST_SESSION?.(clean); } catch (_) {}
   }
 
   function mapAppointment(row) {
@@ -53,7 +52,7 @@
 
   async function loadAppointments() {
     if (!user || !user.id || user.admin) return [];
-    const response = await fetch('/api/customers/' + encodeURIComponent(user.id) + '/appointments');
+    const response = await fetch('/api/customers/' + encodeURIComponent(user.id) + '/appointments', { cache: 'no-store' });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'APPOINTMENTS_FAILED');
     appointments = (data.appointments || []).filter(x => x.status !== 'cancelled').map(mapAppointment);
@@ -85,7 +84,9 @@
         return;
       }
       user = { id: data.customer.id, name: data.customer.fullName, firstName: data.customer.firstName, lastName: data.customer.lastName, phone: data.customer.phone, dob: data.customer.birthDate };
+      persistCustomer(user);
       await loadAppointments();
+      persistCustomer(user);
       window.enterApp();
     } catch (error) {
       console.error(error);
@@ -111,6 +112,7 @@
       if (!response.ok) throw new Error(data.error || 'REGISTRATION_FAILED');
       user = { id: data.customer.id, name: data.customer.fullName, firstName: data.customer.firstName, lastName: data.customer.lastName, phone: data.customer.phone, dob: data.customer.birthDate };
       appointments = [];
+      persistCustomer(user);
       window.enterApp();
     } catch (error) {
       console.error(error);
