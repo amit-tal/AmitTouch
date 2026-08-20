@@ -11,6 +11,8 @@
     "express": "^5.1.0",
     "googleapis": "^159.0.0",
     "luxon": "^3.7.2",
+    "node-ical": "^0.20.1",
+    "tsdav": "^2.1.6",
     "web-push": "^3.6.7"
   }
 }
