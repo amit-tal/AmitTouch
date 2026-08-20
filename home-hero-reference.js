@@ -1,6 +1,6 @@
 (function(){
   const home=document.getElementById('home');if(!home)return;
-  const BUILD='20260820-home-hero-spacing-v26';
+  const BUILD='20260820-home-hero-bottom-fade-v27';
   const HERO='/assets/ChatGPT%20Image%20Aug%2015%2C%202026%2C%2008_59_48%20PM.png';
   document.getElementById('amit-home-hero-reference')?.remove();
   const style=document.createElement('style');style.id='amit-home-hero-reference';style.textContent=`
@@ -8,7 +8,7 @@
   #home .home-hero>.logo{position:relative!important;z-index:3!important;display:block!important;opacity:1!important;visibility:visible!important;background:transparent!important}
   #home .hero-photo{position:relative!important;z-index:1!important;height:354px!important;margin:-58px -15px 10px!important;overflow:visible!important;border:0!important;border-radius:0!important;background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important;pointer-events:none!important}
   #home .hero-photo:before,#home .hero-photo:after{display:none!important;content:none!important}#home .hero-photo>img:not(.home-hero-art){display:none!important}
-  #home .home-hero-art{display:block!important;position:absolute!important;z-index:1!important;right:-14px!important;top:0!important;bottom:auto!important;width:108%!important;height:auto!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:right top!important;opacity:1!important;visibility:visible!important;pointer-events:none!important;background:transparent!important}
+  #home .home-hero-art{display:block!important;position:absolute!important;z-index:1!important;right:-14px!important;top:0!important;bottom:auto!important;width:108%!important;height:auto!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:right top!important;opacity:1!important;visibility:visible!important;pointer-events:none!important;background:transparent!important;-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 68%,rgba(0,0,0,.94) 74%,rgba(0,0,0,.70) 82%,rgba(0,0,0,.34) 91%,transparent 100%)!important;mask-image:linear-gradient(to bottom,#000 0%,#000 68%,rgba(0,0,0,.94) 74%,rgba(0,0,0,.70) 82%,rgba(0,0,0,.34) 91%,transparent 100%)!important;-webkit-mask-repeat:no-repeat!important;mask-repeat:no-repeat!important;-webkit-mask-size:100% 100%!important;mask-size:100% 100%!important}
   #home .hero-copy{position:absolute!important;z-index:4!important;left:10px!important;top:92px!important;width:190px!important;text-align:center!important;direction:rtl!important;color:#07584f!important}
   #home .hero-greeting{display:flex!important;direction:rtl!important;align-items:baseline!important;justify-content:center!important;gap:5px!important;margin:0 0 18px!important;font-family:Inter,sans-serif!important;font-size:18px!important;line-height:1.25!important;font-weight:300!important;color:#07584f!important;white-space:nowrap!important}
   #home .hero-name,#home .hero-welcome{display:inline!important;margin:0!important;font:inherit!important;color:inherit!important}#home .hero-touch{display:block!important;margin:0!important;font-family:var(--hand,'GveretLevin',cursive)!important;font-size:31px!important;line-height:1.15!important;font-weight:100!important;white-space:nowrap!important;color:#07584f!important}
