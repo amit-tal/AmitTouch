@@ -3,6 +3,7 @@ const originalReadFileSync=fs.readFileSync.bind(fs);
 function readTextParts(parts){try{return parts.map(p=>originalReadFileSync(new URL(p,import.meta.url),'utf8')).join('').replace(/\s+/g,'')}catch(_){return''}}
 function readBase64(path){try{return originalReadFileSync(new URL(path,import.meta.url)).toString('base64')}catch(_){return''}}
 const splashBg64=readTextParts(['./assets/splash.part0.b64','./assets/splash.part1.b64','./assets/splash.part2.b64','./assets/splash.part3.b64','./assets/splash.part4.b64']);
+const handFont64=readTextParts(['./assets/handwriting.part0.b64','./assets/handwriting.part1.b64','./assets/handwriting.part2.b64','./assets/handwriting.part3.b64']);
 const splashLogo64=readBase64('./assets/amitouch_logo_vector.png');
 const splashHeart64=readBase64('./assets/amit-touch-heart.svg');
 
@@ -12,11 +13,12 @@ fs.readFileSync=function patchedReadFileSync(path,...args){
   if(!pathText.endsWith('index.html'))return result;
   const isBuffer=Buffer.isBuffer(result);
   let html=isBuffer?result.toString('utf8'):String(result);
-  const build='20260820-atomic-boot-persistent-session-v70';
+  const build='20260820-handwriting-boot-v71';
   const finalLogo=`/assets/amitouch_logo_vector.png?v=${build}`;
   const bootLogo=splashLogo64?`data:image/png;base64,${splashLogo64}`:finalLogo;
   const bootHeart=splashHeart64?`data:image/svg+xml;base64,${splashHeart64}`:`/assets/amit-touch-heart.svg?v=${build}`;
   const bootBg=splashBg64?`data:image/webp;base64,${splashBg64}`:'';
+  const handFont=handFont64?`data:font/woff2;base64,${handFont64}`:'';
 
   html=html.replaceAll('/assets/amit-touch-logo.svg',finalLogo)
     .replaceAll('/assets/amit-touch-logo.webp?v=20260815-final-logo',finalLogo)
@@ -29,8 +31,6 @@ fs.readFileSync=function patchedReadFileSync(path,...args){
     .replaceAll('/assets/Amit%20Touch_Logo.png?v=20260815-login',finalLogo)
     .replaceAll('/assets/Amit%20Touch_Logo.png',finalLogo);
 
-  // Disable the legacy splash completely. A separate immutable boot layer is rendered
-  // from the initial HTML response and is never restyled by client scripts.
   html=html.replace(/setTimeout\(\(\)=>document\.getElementById\('splash'\)\.classList\.add\('hide'\),1600\);?/g,'');
 
   const bootHead=`<script>(function(){
@@ -58,14 +58,15 @@ fs.readFileSync=function patchedReadFileSync(path,...args){
   })();</script>`;
 
   const critical=`<style id="amit-boot-critical">
+    ${handFont?`@font-face{font-family:'GveretLevin';src:url('${handFont}') format('woff2');font-weight:100 900;font-style:normal;font-display:block}`:''}
     html.amit-booting,html.amit-booting body{margin:0!important;width:100%!important;height:100%!important;overflow:hidden!important;background:#fbf5ef!important}
     html.amit-booting body>*:not(#amit-boot-splash){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
     #splash{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
     #amit-boot-splash{position:fixed!important;inset:0!important;z-index:2147483647!important;display:flex!important;align-items:stretch!important;justify-content:center!important;overflow:hidden!important;background:#fbf5ef${bootBg?` url('${bootBg}') center/cover no-repeat`:''}!important;opacity:1!important;visibility:visible!important;transition:none!important}
     #amit-boot-splash .amit-boot-inner{width:min(430px,100%)!important;height:100%!important;display:flex!important;flex-direction:column!important;align-items:center!important;text-align:center!important;padding:0 22px!important;box-sizing:border-box!important}
     #amit-boot-splash .amit-boot-logo{display:block!important;width:min(335px,84vw)!important;max-height:43vh!important;object-fit:contain!important;margin:12.5vh auto 0!important;background:transparent!important}
-    #amit-boot-splash .amit-boot-copy{display:flex!important;flex-direction:column!important;align-items:center!important;margin:36px 0 0!important;color:#285f5a!important;font-family:Arial,sans-serif!important;font-size:25px!important;line-height:1.4!important;font-weight:400!important;direction:rtl!important}
-    #amit-boot-splash .amit-boot-line{display:block!important;white-space:nowrap!important;font:400 25px/1.4 Arial,sans-serif!important;color:#285f5a!important}
+    #amit-boot-splash .amit-boot-copy{display:flex!important;flex-direction:column!important;align-items:center!important;margin:36px 0 0!important;color:#285f5a!important;font-family:'GveretLevin',cursive!important;font-size:25px!important;line-height:1.55!important;font-weight:100!important;direction:rtl!important}
+    #amit-boot-splash .amit-boot-line{display:block!important;white-space:nowrap!important;font-family:'GveretLevin',cursive!important;font-size:25px!important;line-height:1.55!important;font-weight:100!important;color:#285f5a!important}
     #amit-boot-splash .amit-boot-heart{display:block!important;width:42px!important;height:42px!important;margin:20px auto 0!important;object-fit:contain!important}
   </style>`;
   html=html.replace('</head>',bootHead+critical+'</head>');
