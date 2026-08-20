@@ -6,6 +6,11 @@ const sourcePath = path.resolve('./server-v2.js');
 const runtimePath = path.resolve('./.server-v2-runtime.mjs');
 let source = fs.readFileSync(sourcePath, 'utf8');
 
+function replaceRequired(input, before, after, label) {
+  if (!input.includes(before)) throw new Error(`PATCH_TARGET_NOT_FOUND: ${label}`);
+  return input.replace(before, after);
+}
+
 const helper = String.raw`
 async function syncApprovedAppointmentToIcloud(appointment, customer) {
   if (!icloudConfigured() || !appointment || !customer) return false;
@@ -69,8 +74,53 @@ const approvalUpdateSafe = "const { data: updated, error: updateError } = await 
 source = source.replace(approvalUpdateOriginal, approvalUpdateSafe);
 
 const icloudBusyOriginal = "const icloudBusy = await getIcloudBusyPeriods(expandedMin, expandedMax);";
-const icloudBusySafe = "const icloudBusy = await Promise.race([getIcloudBusyPeriods(expandedMin, expandedMax), new Promise(resolve => setTimeout(() => resolve({ calendars: 0, busy: [] }), 5000))]);";
+const icloudBusySafe = "const icloudBusy = await Promise.race([getIcloudBusyPeriods(expandedMin, expandedMax), new Promise(resolve => setTimeout(() => resolve({ calendars: 0, busy: [] }), 3500))]);";
 source = source.replace(icloudBusyOriginal, icloudBusySafe);
+
+const oldBusyCheck = [
+  "    const calendar = calendarClient();",
+  "    const { busy } = await getBusyPeriods(calendar, start.toUTC().toISO(), blockedEnd.toUTC().toISO());",
+  "    if (busy.some(item => conflictsWithBusy(start, blockedEnd, item))) return res.status(409).json({ error: 'SLOT_TAKEN' });"
+].join('\n');
+const newBusyCheck = [
+  "    const startIso = start.toUTC().toISO();",
+  "    const endIso = blockedEnd.toUTC().toISO();",
+  "    const { data: conflicts, error: conflictError } = await supabase.from('appointments').select('id').in('status', ['pending','confirmed']).lt('starts_at', endIso).gt('ends_at', startIso).limit(1);",
+  "    if (conflictError) throw conflictError;",
+  "    if (conflicts && conflicts.length) return res.status(409).json({ error: 'SLOT_TAKEN' });"
+].join('\n');
+source = replaceRequired(source, oldBusyCheck, newBusyCheck, 'booking busy check');
+
+const oldCalendarInsert = [
+  "    const eventTitle = isAdminCreated ? `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}` : `ממתין לאישור · AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}`;",
+  "    const event = await calendar.events.insert({ calendarId: CALENDAR_ID, requestBody: { summary: eventTitle, description: `סטטוס: ${status}\\nלקוחה: ${customer.first_name} ${customer.last_name}\\nנייד: ${customer.phone}\\nטיפול: ${booking.service}\\nתוספות: ${booking.extra || 'ללא'}\\nמחיר: ₪${booking.price}\\nזמן טיפול: ${booking.minutes} דקות\\nBuffer: ${BUFFER_MINUTES} דקות`, start: { dateTime: start.toISO(), timeZone: TZ }, end: { dateTime: blockedEnd.toISO(), timeZone: TZ }, transparency: 'opaque' } });",
+  "    createdEventId = event.data.id; const extras = booking.extra ? [{ name: booking.extra }] : [];"
+].join('\n');
+const newCalendarInsert = "    const extras = booking.extra ? [{ name: booking.extra }] : [];";
+source = replaceRequired(source, oldCalendarInsert, newCalendarInsert, 'blocking calendar insert');
+
+source = replaceRequired(
+  source,
+  "starts_at: start.toUTC().toISO(), ends_at: blockedEnd.toUTC().toISO(), google_event_id: createdEventId, status",
+  "starts_at: startIso, ends_at: endIso, google_event_id: null, status",
+  'appointment timestamps'
+);
+
+const oldResponse = "    res.status(201).json({ ok: true, appointment, eventId: createdEventId });";
+const newResponse = [
+  "    res.status(201).json({ ok: true, appointment, eventId: null });",
+  "    setImmediate(() => {",
+  "      (async () => {",
+  "        try {",
+  "          const calendar = calendarClient();",
+  "          const eventTitle = isAdminCreated ? `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}` : `ממתין לאישור · AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}`;",
+  "          const event = await calendar.events.insert({ calendarId: CALENDAR_ID, requestBody: { summary: eventTitle, description: `סטטוס: ${status}\\nלקוחה: ${customer.first_name} ${customer.last_name}\\nנייד: ${customer.phone}\\nטיפול: ${booking.service}\\nתוספות: ${booking.extra || 'ללא'}\\nמחיר: ₪${booking.price}\\nזמן טיפול: ${booking.minutes} דקות\\nBuffer: ${BUFFER_MINUTES} דקות`, start: { dateTime: start.toISO(), timeZone: TZ }, end: { dateTime: blockedEnd.toISO(), timeZone: TZ }, transparency: 'opaque' } });",
+  "          if (event?.data?.id) await supabase.from('appointments').update({ google_event_id: event.data.id }).eq('id', appointment.id);",
+  "        } catch (calendarError) { console.error('Deferred Google calendar sync failed', calendarError); }",
+  "      })();",
+  "    });"
+].join('\n');
+source = replaceRequired(source, oldResponse, newResponse, 'booking response');
 
 fs.writeFileSync(runtimePath, source, 'utf8');
 await import(pathToFileURL(runtimePath).href + '?v=' + Date.now());
