@@ -3,7 +3,7 @@
   window.__AMIT_TOUCH_SPLASH_CONTROLLER__=true;
   const splash=document.getElementById('splash');if(!splash)return;
   splash.classList.remove('brand-ready','brand-done','hide');splash.classList.add('brand-loading');splash.style.opacity='0';splash.style.visibility='hidden';
-  const splashLogo=splash.querySelector('img.splash-logo');const logoUrl='/assets/amitouch_logo_vector.png?v=20260819-splash-two-lines';if(splashLogo){splashLogo.classList.remove('splash-logo');splashLogo.classList.add('splash-brand-logo');splashLogo.src=logoUrl;}
+  const splashLogo=splash.querySelector('img.splash-logo');const logoUrl='/assets/amitouch_logo_vector.png?v=20260820-min-font-16';if(splashLogo){splashLogo.classList.remove('splash-logo');splashLogo.classList.add('splash-brand-logo');splashLogo.src=logoUrl;}
   const guard=document.createElement('style');guard.id='amit-touch-splash-guard';guard.textContent=`#splash.brand-loading{opacity:0!important;visibility:hidden!important;pointer-events:none!important}#splash.brand-ready,#splash.brand-ready.hide:not(.brand-done){opacity:1!important;visibility:visible!important;pointer-events:auto!important}#splash.brand-done,#splash.brand-done.hide{opacity:0!important;visibility:hidden!important;pointer-events:none!important}`;document.head.appendChild(guard);
   async function join(parts){const texts=await Promise.all(parts.map(p=>fetch(p,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('asset '+p);return r.text();})));return texts.join('').replace(/\s+/g,'');}
   function base64BlobUrl(b64,type){const bin=atob(b64);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return URL.createObjectURL(new Blob([bytes],{type}));}
@@ -18,6 +18,7 @@
       @font-face{font-family:'GveretLevin';src:url('${fontUrl}') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
       :root{--hand:'GveretLevin',cursive;--ui-font:'Inter',Arial,sans-serif}
       html,body,body *,button,input,select,textarea,option,optgroup,label,a,p,span,div,h1,h2,h3,h4,h5,h6,strong,b,small,nav,section,header,footer{font-family:var(--ui-font)!important}body *::before,body *::after{font-family:var(--ui-font)!important}
+      body :is(button,input,select,textarea,option,optgroup,label,a,p,span,h1,h2,h3,h4,h5,h6,strong,b,small,li,td,th,time){font-size:max(16px,1em)}
       #splash{background:#fbf5ef url('${imgUrl}') center/cover no-repeat!important;transition:opacity .5s ease,visibility .5s ease!important}
       #splash .splash-inner{width:min(430px,100%)!important;height:100%!important;padding:0 22px!important;display:flex!important;flex-direction:column!important;align-items:center!important;position:relative!important;text-align:center!important}
       #splash .splash-brand-logo{display:block!important;width:min(335px,84vw)!important;max-height:43vh!important;object-fit:contain!important;margin:12.5vh auto 0!important;flex:0 0 auto!important;background:transparent!important}
