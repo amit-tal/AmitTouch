@@ -1,10 +1,10 @@
 (function(){
- const BUILD='20260820-about-icons-align-v9';
+ const BUILD='20260820-about-icons-align-v10-noscroll';
  let about=document.getElementById('about');
  if(!about){about=document.createElement('section');about.id='about';about.className='screen';document.querySelector('main.app')?.appendChild(about);}
  document.getElementById('amit-about-style')?.remove();
  const style=document.createElement('style');style.id='amit-about-style';style.textContent=`
- #about{min-height:100dvh!important;padding:30px 24px 100px!important;background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important;border:0!important;outline:0!important;filter:none!important;color:#315c57!important;direction:rtl!important;font-family:Inter,sans-serif!important;text-align:center!important;overflow:auto!important}
+ #about{height:calc(100dvh - 82px)!important;min-height:0!important;max-height:calc(100dvh - 82px)!important;padding:30px 24px 18px!important;box-sizing:border-box!important;background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important;border:0!important;outline:0!important;filter:none!important;color:#315c57!important;direction:rtl!important;font-family:Inter,sans-serif!important;text-align:center!important;overflow:hidden!important;overscroll-behavior:none!important}
  #about:before,#about:after{content:none!important;display:none!important;background:none!important;box-shadow:none!important}
  #about .about-logo{display:block!important;width:min(190px,58vw)!important;height:auto!important;margin:8px auto 34px!important;object-fit:contain!important;background:transparent!important}
  #about .about-tagline{margin:0 auto 30px!important;max-width:320px!important;font-size:16px!important;line-height:1.75!important;font-weight:400!important;color:#385d59!important;background:transparent!important}
