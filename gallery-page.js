@@ -1,5 +1,5 @@
 (function(){
- const BUILD='20260820-gallery-client-photos-v3';
+ const BUILD='20260820-gallery-client-photos-v4';
  const teal='#1f5d57';
  const imgs=[
   '/assets/WhatsApp%20Image%202026-08-20%20at%2014.44.29.jpeg',
@@ -39,7 +39,7 @@
  function syncFavorite(){const page=document.getElementById('gallery');const btn=page?.querySelector('.gallery-fav');if(!btn)return;const saved=favorites.has(imgs[index]);btn.classList.toggle('saved',saved);btn.setAttribute('aria-pressed',String(saved));btn.setAttribute('aria-label',saved?'הסרה מהמועדפים':'שמירה למועדפים');}
  function setIndex(i){const page=document.getElementById('gallery');if(!page)return;index=(i+imgs.length)%imgs.length;const main=page.querySelector('.gallery-main-img');if(main)main.src=imgs[index]+`?v=${BUILD}`;page.querySelectorAll('.gallery-dot,.gallery-thumb').forEach(el=>el.classList.toggle('active',Number(el.dataset.i)===index));syncFavorite();}
  function open(){favorites=loadFavorites();const page=ensure();document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));page.classList.add('active');document.querySelector('.nav')?.classList.remove('show');page.scrollTop=0;bindSwipe(page);setIndex(index);}
- function bindSwipe(page){const stage=page.querySelector('.gallery-stage');if(!stage||stage.dataset.swipeBound)return;stage.dataset.swipeBound='1';let sx=0,sy=0,tracking=false;stage.addEventListener('pointerdown',e=>{if(e.target.closest('.gallery-fav'))return;tracking=true;sx=e.clientX;sy=e.clientY;});stage.addEventListener('pointerup',e=>{if(!tracking)return;tracking=false;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy))setIndex(index+(dx<0?1:-1));});stage.addEventListener('pointercancel',()=>tracking=false);}
+ function bindSwipe(page){const stage=page.querySelector('.gallery-stage');if(!stage||stage.dataset.swipeBound)return;stage.dataset.swipeBound='1';let sx=0,sy=0,tracking=false;stage.addEventListener('pointerdown',e=>{if(e.target.closest('.gallery-fav'))return;tracking=true;sx=e.clientX;sy=e.clientY;});stage.addEventListener('pointerup',e=>{if(!tracking)return;tracking=false;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy))setIndex(index+(dx<0?-1:1));});stage.addEventListener('pointercancel',()=>tracking=false);}
  ensure();bindSwipe(document.getElementById('gallery'));setIndex(0);
  document.addEventListener('click',e=>{const page=document.getElementById('gallery');const t=e.target.closest('button');if(!t)return;if(t.classList.contains('gallery-profile')){window.show?.('profile');document.querySelector('.nav')?.classList.add('show');}else if(t.classList.contains('gallery-dot')||t.classList.contains('gallery-thumb'))setIndex(Number(t.dataset.i));else if(t.classList.contains('gallery-fav')){const key=imgs[index];favorites.has(key)?favorites.delete(key):favorites.add(key);saveFavorites(favorites);syncFavorite();}});
  document.addEventListener('click',e=>{const el=e.target.closest('button,a,[role="button"]');if(!el)return;if((el.textContent||'').trim()==='גלריה'){e.preventDefault();e.stopPropagation();open();}},true);
