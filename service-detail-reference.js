@@ -1,5 +1,5 @@
 (function(){
- const BUILD='20260820-service-detail-extras-v5';
+ const BUILD='20260820-service-detail-extras-v6';
  const ICONS={gel:'/assets/%D7%9E%D7%A0%D7%99%D7%A7%D7%95%D7%A8%20%D7%92%D7%9C.png',new:'/assets/ChatGPT%20Image%20Aug%2019%2C%202026%2C%2004_04_17%20PM.png',fill:'/assets/%D7%9E%D7%99%D7%9C%D7%95%D7%99.png',repair:'/assets/%D7%94%D7%A9%D7%9C%D7%9E%D7%94.png',remove:'/assets/%D7%94%D7%A1%D7%A8%D7%94.png'};
  const COPY={
   gel:{desc:'מניקור ג׳ל מוקפד במראה נקי ומדויק, כולל הכנת הציפורן, התאמת צורה ומריחה מקצועית.',include:['ייעוץ והתאמת צורה','מניקור והכנת הציפורן','מריחת ג׳ל וגימור מדויק']},
@@ -8,6 +8,11 @@
   repair:{desc:'תיקון ממוקד לציפורן שנשברה או נפגעה, תוך התאמה למבנה ולאורך הקיים וגימור אחיד.',include:['בדיקת הציפורן','תיקון והשלמת המבנה','שיוף והתאמת צורה','גימור מדויק']},
   remove:{desc:'הסרה עדינה ומבוקרת של החומר הקיים, תוך שמירה על הציפורן הטבעית והכנתה להמשך.',include:['הסרה מבוקרת','שיוף עדין','ניקוי הציפורן','גימור טבעי']}
  };
+ const EXTRAS=[
+  {id:'none',n:'ללא תוספות',p:0,m:0,sub:'להמשיך לטיפול שבחרת'},
+  {id:'art',n:'ציורים ועיצוב',p:100,m:30,sub:'המחיר הסופי לפי מורכבות'},
+  {id:'repair',n:'תיקון ציפורן',p:25,m:15,sub:'15/25/30/35 ₪ לפי הבסיס'}
+ ];
  document.getElementById('amit-service-detail-style')?.remove();
  const s=document.createElement('style');s.id='amit-service-detail-style';s.textContent=`
  #detail{position:relative!important;height:calc(100dvh - 82px)!important;min-height:0!important;max-height:calc(100dvh - 82px)!important;padding:8px 20px 12px!important;box-sizing:border-box!important;background:transparent!important;direction:rtl!important;color:#315c57!important;overflow:hidden!important;overscroll-behavior:none!important;scrollbar-width:none!important}#detail::-webkit-scrollbar{display:none!important}
@@ -22,29 +27,32 @@
  #detail .service-detail-include,#detail .service-detail-extras{border-radius:14px!important;padding:9px 15px 8px!important;background:rgba(255,255,255,.46)!important;border:1px solid rgba(255,255,255,.88)!important;box-shadow:0 4px 14px rgba(70,72,66,.05)!important;text-align:right!important;margin-bottom:7px!important}
  #detail .service-detail-include h3,#detail .service-detail-extras h3{text-align:center!important;font-size:11px!important;font-weight:500!important;margin:0 0 5px!important;color:#315c57!important}
  #detail .service-detail-include p{position:relative!important;font-size:10.5px!important;color:#607572!important;margin:4px 0!important;padding:0 22px 0 0!important;line-height:1.35!important}.service-detail-include p:before{content:'✓'!important;position:absolute!important;right:0!important;top:-1px!important;color:#2f716b!important;font-size:14px!important}
- #detail .embedded-extras{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important}#detail .embedded-extras button{min-height:37px!important;border:1px solid rgba(47,113,107,.18)!important;border-radius:9px!important;background:rgba(255,255,255,.48)!important;color:#496964!important;font-size:9.5px!important;padding:5px!important;box-shadow:none!important}#detail .embedded-extras button.extra-selected{background:#397a73!important;color:white!important;border-color:#397a73!important}
+ #detail .embedded-extras{display:flex!important;flex-direction:column!important;gap:5px!important}
+ #detail .extra-option{width:100%!important;min-height:42px!important;border:1px solid rgba(47,113,107,.14)!important;border-radius:11px!important;background:rgba(255,255,255,.52)!important;color:#496964!important;padding:6px 9px!important;display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:8px!important;align-items:center!important;text-align:right!important;transition:opacity .16s ease,background .16s ease,border-color .16s ease!important;box-shadow:none!important}
+ #detail .extra-option .extra-check{width:19px!important;height:19px!important;border-radius:50%!important;border:1.4px solid rgba(47,113,107,.42)!important;display:grid!important;place-items:center!important;color:transparent!important;font-size:12px!important;font-weight:600!important;background:rgba(255,255,255,.35)!important}
+ #detail .extra-option .extra-copy strong{display:block!important;font-size:10.5px!important;font-weight:500!important;line-height:1.2!important}.extra-option .extra-copy small{display:block!important;font-size:8.8px!important;font-weight:300!important;color:#7b8986!important;margin-top:2px!important;line-height:1.2!important}
+ #detail .extra-option.extra-selected{background:rgba(255,255,255,.72)!important;border-color:rgba(47,113,107,.45)!important;opacity:1!important}.extra-option.extra-selected .extra-check{background:#397a73!important;border-color:#397a73!important;color:#fff!important}.extra-option.extra-dimmed{opacity:.34!important}
  #detail .service-detail-book{width:100%!important;height:46px!important;border:0!important;border-radius:9px!important;padding:0 14px!important;background:linear-gradient(90deg,#397d76,#276a64)!important;color:white!important;font-size:15px!important;font-weight:600!important;box-shadow:0 6px 14px rgba(37,93,87,.12)!important;margin:0!important}#detail .service-detail-book:disabled{opacity:.34!important;box-shadow:none!important;cursor:not-allowed!important}
  #detail .extra-required-note{text-align:center!important;font-size:9.5px!important;color:#87918f!important;margin:2px 0 5px!important}
- @media(max-height:720px){#detail .service-detail-icon{height:70px!important}.service-detail-icon img{height:70px!important}#detail .service-detail-desc{line-height:1.35!important}#detail .service-detail-include{display:none!important}#detail .service-detail-extras{padding:7px 12px!important}.embedded-extras button{min-height:33px!important}#detail .service-detail-book{height:42px!important}}
+ @media(max-height:720px){#detail .service-detail-icon{height:67px!important}.service-detail-icon img{height:67px!important}#detail .service-detail-desc{line-height:1.3!important}#detail .service-detail-include{display:none!important}#detail .service-detail-extras{padding:7px 12px!important}.extra-option{min-height:37px!important}#detail .service-detail-book{height:42px!important}}
  `;document.head.appendChild(s);
  const original=window.detail;
  function durationText(m){if(m<60)return `${m} דקות`;if(m===60)return 'שעה';if(m%60===0)return `${m/60} שעות`;const h=Math.floor(m/60),r=m%60;if(r===30)return h===1?'שעה וחצי':`${h} שעות וחצי`;return `${h} שעות ו${r} דקות`;}
- function captureExtrasMarkup(){
-  const originalExtras=window.extras;
-  const extraBody=document.getElementById('extraBody');
-  if(typeof originalExtras!=='function'||!extraBody)return '';
-  const oldHtml=extraBody.innerHTML;
-  const originalShow=window.show;
-  try{window.show=function(id){if(id==='extra')return;return originalShow?.(id);};originalExtras();const holder=document.createElement('div');holder.innerHTML=extraBody.innerHTML;const buttons=[...holder.querySelectorAll('button')].filter(b=>!/(חזרה|המשך|ביטול)/.test((b.textContent||'').trim()));return buttons.map(b=>`<button type="button" data-extra-action="${encodeURIComponent(b.getAttribute('onclick')||'')}">${b.innerHTML}</button>`).join('');}catch(e){console.warn('Could not embed extras',e);return '';}finally{window.show=originalShow;extraBody.innerHTML=oldHtml;}
- }
+ function extrasMarkup(){return EXTRAS.map(e=>`<button class="extra-option" type="button" data-extra-id="${e.id}"><span class="extra-check">✓</span><span class="extra-copy"><strong>${e.n}</strong><small>${e.sub}</small></span></button>`).join('');}
  window.detail=function(id){
   if(typeof booking==='undefined'||typeof SERVICES==='undefined')return original?.(id);const x=SERVICES.find(v=>v.id===id);if(!x)return original?.(id);booking={service:x};show('detail');
   const top=document.querySelector('#detail .top');if(top){top.innerHTML='<button class="round" type="button" aria-label="חזרה"></button>';top.querySelector('.round').onclick=()=>window.services?window.services():window.show?.('services');}
-  const c=COPY[id]||COPY.gel,icon=ICONS[id]||ICONS.repair;const extrasMarkup=id==='remove'?'':captureExtrasMarkup();
-  document.getElementById('detailBody').innerHTML=`<div class="service-detail-ref"><div class="service-detail-icon"><img src="${icon}?v=${BUILD}" alt=""></div><h1>${x.n}</h1><p class="service-detail-desc">${c.desc}</p><p class="service-detail-from">החל מ</p><div class="service-detail-price">₪${x.p}</div><div class="service-detail-separator"></div><p class="service-detail-duration-label">משך טיפול</p><p class="service-detail-duration">${durationText(x.m)}</p><div class="service-detail-include"><h3>מה כולל השירות?</h3>${c.include.map(v=>`<p>${v}</p>`).join('')}</div>${id==='remove'?'':`<div class="service-detail-extras"><h3>בחרי תוספת</h3><div class="embedded-extras">${extrasMarkup}</div></div><p class="extra-required-note">יש לבחור אפשרות אחת כדי להמשיך לבחירת תאריך</p>`}<button class="service-detail-book" type="button" ${id==='remove'?'':'disabled'}>הזמיני תור</button></div>`;
+  const c=COPY[id]||COPY.gel,icon=ICONS[id]||ICONS.repair;
+  document.getElementById('detailBody').innerHTML=`<div class="service-detail-ref"><div class="service-detail-icon"><img src="${icon}?v=${BUILD}" alt=""></div><h1>${x.n}</h1><p class="service-detail-desc">${c.desc}</p><p class="service-detail-from">החל מ</p><div class="service-detail-price">₪${x.p}</div><div class="service-detail-separator"></div><p class="service-detail-duration-label">משך טיפול</p><p class="service-detail-duration">${durationText(x.m)}</p><div class="service-detail-include"><h3>מה כולל השירות?</h3>${c.include.map(v=>`<p>${v}</p>`).join('')}</div>${id==='remove'?'':`<div class="service-detail-extras"><h3>בחרי תוספת</h3><div class="embedded-extras">${extrasMarkup()}</div></div><p class="extra-required-note">יש לבחור אפשרות אחת כדי להמשיך לבחירת תאריך</p>`}<button class="service-detail-book" type="button" ${id==='remove'?'':'disabled'}>הזמיני תור</button></div>`;
   const bookBtn=document.querySelector('#detail .service-detail-book');
   if(id==='remove'){bookBtn.onclick=()=>calendar();return;}
-  document.querySelectorAll('#detail .embedded-extras button').forEach(btn=>btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();const action=decodeURIComponent(this.dataset.extraAction||'');const realCalendar=window.calendar;const realShow=window.show;try{window.calendar=function(){};window.show=function(target){if(target==='book'||target==='extra')return;return realShow?.(target);};if(action)new Function(action).call(this);}catch(err){console.error('Extra selection failed',err);}finally{window.calendar=realCalendar;window.show=realShow;}document.querySelectorAll('#detail .embedded-extras button').forEach(b=>b.classList.remove('extra-selected'));this.classList.add('extra-selected');bookBtn.disabled=false;}));
-  bookBtn.onclick=()=>{if(bookBtn.disabled)return;calendar();};
+  const optionButtons=[...document.querySelectorAll('#detail .extra-option')];
+  optionButtons.forEach(btn=>btn.addEventListener('click',function(){
+    const chosen=EXTRAS.find(e=>e.id===this.dataset.extraId);if(!chosen)return;
+    booking.extra={n:chosen.n,p:chosen.p,m:chosen.m};
+    optionButtons.forEach(b=>{const selected=b===this;b.classList.toggle('extra-selected',selected);b.classList.toggle('extra-dimmed',!selected);});
+    bookBtn.disabled=false;
+  }));
+  bookBtn.onclick=()=>{if(bookBtn.disabled||!booking.extra)return;calendar();};
  };
 })();
