@@ -1,7 +1,7 @@
 (function(){
   const home=document.getElementById('home');if(!home)return;
-  const BUILD='20260820-home-hero-transparent-art-v24';
-  const HERO='/assets/home-hero-transparent.webp';
+  const BUILD='20260820-home-hero-nails-logo-v25';
+  const HERO='/assets/ChatGPT%20Image%20Aug%2015%2C%202026%2C%2008_59_48%20PM.png';
   document.getElementById('amit-home-hero-reference')?.remove();
   const style=document.createElement('style');style.id='amit-home-hero-reference';style.textContent=`
   #home .home-hero{position:relative!important;padding:0!important;margin:0!important;background:transparent!important;background-color:transparent!important;background-image:none!important;overflow:visible!important;isolation:isolate!important}
