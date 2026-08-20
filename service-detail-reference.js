@@ -1,5 +1,5 @@
 (function(){
- const BUILD='20260820-service-detail-ref-v3';
+ const BUILD='20260820-service-detail-ref-v4';
  const ICONS={gel:'/assets/%D7%9E%D7%A0%D7%99%D7%A7%D7%95%D7%A8%20%D7%92%D7%9C.png',new:'/assets/ChatGPT%20Image%20Aug%2019%2C%202026%2C%2004_04_17%20PM.png',fill:'/assets/%D7%9E%D7%99%D7%9C%D7%95%D7%99.png',repair:'/assets/%D7%94%D7%A9%D7%9C%D7%9E%D7%94.png',remove:'/assets/%D7%94%D7%A1%D7%A8%D7%94.png'};
  const COPY={
   gel:{desc:'מניקור ג׳ל מוקפד במראה נקי ומדויק, כולל הכנת הציפורן, התאמת צורה ומריחה מקצועית.',include:['ייעוץ והתאמת צורה','מניקור והכנת הציפורן','מריחת ג׳ל וגימור מדויק']},
@@ -40,7 +40,7 @@
   const top=document.querySelector('#detail .top');
   if(top){top.innerHTML='<button class="round" type="button" aria-label="חזרה"></button>';top.querySelector('.round').onclick=()=>window.services?window.services():window.show?.('services');}
   const c=COPY[id]||COPY.gel, icon=ICONS[id]||ICONS.repair;
-  document.getElementById('detailBody').innerHTML=`<div class="service-detail-ref"><div class="service-detail-icon"><img src="${icon}?v=${BUILD}" alt=""></div><h1>${x.n}</h1><p class="service-detail-desc">${c.desc}</p><p class="service-detail-from">החל מ</p><div class="service-detail-price">₪${x.p}</div><div class="service-detail-separator"></div><p class="service-detail-duration-label">משך טיפול</p><p class="service-detail-duration">${x.m>=60?`${Math.floor(x.m/60)} שעה${x.m%60?` ו${x.m%60} דקות`:''}`:`${x.m} דקות`} + 30 דקות</p><button class="service-detail-book" type="button">הזמיני תור</button><div class="service-detail-include"><h3>מה כולל השירות?</h3>${c.include.map(v=>`<p>${v}</p>`).join('')}</div></div>`;
+  document.getElementById('detailBody').innerHTML=`<div class="service-detail-ref"><div class="service-detail-icon"><img src="${icon}?v=${BUILD}" alt=""></div><h1>${x.n}</h1><p class="service-detail-desc">${c.desc}</p><p class="service-detail-from">החל מ</p><div class="service-detail-price">₪${x.p}</div><div class="service-detail-separator"></div><p class="service-detail-duration-label">משך טיפול</p><p class="service-detail-duration">${x.m>=60?`${Math.floor(x.m/60)} שעה${x.m%60?` ו${x.m%60} דקות`:''}`:`${x.m} דקות`}</p><button class="service-detail-book" type="button">הזמיני תור</button><div class="service-detail-include"><h3>מה כולל השירות?</h3>${c.include.map(v=>`<p>${v}</p>`).join('')}</div></div>`;
   document.querySelector('#detail .service-detail-book').onclick=()=>x.id==='remove'?calendar():extras();
  };
 })();
