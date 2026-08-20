@@ -1,5 +1,5 @@
 (function(){
-  const BUILD='20260820-services-page-v4-noscroll';
+  const BUILD='20260820-services-page-v5-clean-head';
   const page=document.getElementById('services');
   if(!page)return;
 
@@ -25,10 +25,8 @@
   style.textContent=`
     #services{height:calc(100dvh - 82px)!important;min-height:0!important;max-height:calc(100dvh - 82px)!important;padding:18px 14px 18px!important;box-sizing:border-box!important;background:transparent!important;color:#315c57!important;direction:rtl!important;font-family:Inter,sans-serif!important;overflow:hidden!important;overscroll-behavior:none!important;scrollbar-width:none!important}
     #services::-webkit-scrollbar{display:none!important}
-    #services .services-head{display:grid!important;grid-template-columns:42px 1fr 42px!important;align-items:center!important;min-height:46px!important;margin-bottom:12px!important}
+    #services .services-head{display:flex!important;align-items:center!important;justify-content:center!important;min-height:46px!important;margin-bottom:22px!important}
     #services .services-head h2{margin:0!important;text-align:center!important;font-size:17px!important;font-weight:600!important;color:#173f3b!important}
-    #services .services-back{width:42px!important;height:42px!important;border:0!important;background:transparent!important;color:#315c57!important;font-size:29px!important;line-height:1!important;cursor:pointer!important}
-    #services .services-head-spacer{width:42px!important;height:42px!important}
     #services .services-list{display:flex!important;flex-direction:column!important;gap:7px!important}
     #services .service-card{width:100%!important;min-height:72px!important;border:1px solid rgba(255,255,255,.92)!important;border-radius:18px!important;background:rgba(255,255,255,.48)!important;box-shadow:0 6px 18px rgba(82,66,58,.06)!important;backdrop-filter:blur(15px)!important;-webkit-backdrop-filter:blur(15px)!important;padding:8px 15px!important;display:grid!important;grid-template-columns:minmax(0,1fr) 54px!important;gap:12px!important;align-items:center!important;color:#315c57!important;text-align:right!important;cursor:pointer!important}
     #services .service-copy{min-width:0!important}
@@ -52,8 +50,7 @@
   }
 
   function render(){
-    page.innerHTML=`<div class="services-head"><button class="services-back" type="button" aria-label="חזרה">‹</button><h2>השירותים שלי</h2><span class="services-head-spacer"></span></div><div class="services-list">${PAGE_SERVICES.map(s=>`<button class="service-card" type="button" data-id="${s.id}"><div class="service-copy"><h3>${s.label}</h3><p class="service-from">החל מ</p><p class="service-price">₪${s.price}</p></div><div class="service-icon-wrap">${iconMarkup(s.id)}</div></button>`).join('')}</div>`;
-    page.querySelector('.services-back').onclick=()=>window.show?.('home');
+    page.innerHTML=`<div class="services-head"><h2>השירותים שלי</h2></div><div class="services-list">${PAGE_SERVICES.map(s=>`<button class="service-card" type="button" data-id="${s.id}"><div class="service-copy"><h3>${s.label}</h3><p class="service-from">החל מ</p><p class="service-price">₪${s.price}</p></div><div class="service-icon-wrap">${iconMarkup(s.id)}</div></button>`).join('')}</div>`;
     page.querySelectorAll('.service-card').forEach(btn=>btn.onclick=()=>{
       const id=btn.dataset.id;
       if(id==='repair')return openRepair();
