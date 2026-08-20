@@ -38,22 +38,7 @@ async function syncApprovedAppointmentToIcloud(appointment, customer) {
   const description = ['לקוחה: ' + customer.first_name + ' ' + customer.last_name, 'נייד: ' + customer.phone, 'טיפול: ' + appointment.service_name, 'מחיר: ₪' + appointment.total_price].join('\\n');
   const esc = value => String(value || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
   const iCalString = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//AMIT TOUCH//Appointments//HE',
-    'CALSCALE:GREGORIAN',
-    'BEGIN:VEVENT',
-    'UID:' + uid,
-    'DTSTAMP:' + stamp,
-    'DTSTART:' + dtStart,
-    'DTEND:' + dtEnd,
-    'SUMMARY:' + esc(summary),
-    'DESCRIPTION:' + esc(description),
-    'STATUS:CONFIRMED',
-    'TRANSP:OPAQUE',
-    'END:VEVENT',
-    'END:VCALENDAR',
-    ''
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//AMIT TOUCH//Appointments//HE','CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:' + uid,'DTSTAMP:' + stamp,'DTSTART:' + dtStart,'DTEND:' + dtEnd,'SUMMARY:' + esc(summary),'DESCRIPTION:' + esc(description),'STATUS:CONFIRMED','TRANSP:OPAQUE','END:VEVENT','END:VCALENDAR',''
   ].join('\\r\\n');
   await client.createCalendarObject({ calendar: target, filename: uid + '.ics', iCalString });
   return true;
@@ -61,9 +46,7 @@ async function syncApprovedAppointmentToIcloud(appointment, customer) {
 `;
 
 const routeMarker = "app.post('/api/admin/appointments/:appointmentId/approve'";
-if (!source.includes('syncApprovedAppointmentToIcloud(')) {
-  source = source.replace(routeMarker, helper + '\n' + routeMarker);
-}
+if (!source.includes('syncApprovedAppointmentToIcloud(')) source = source.replace(routeMarker, helper + '\n' + routeMarker);
 
 const googlePatchOriginal = "if (appointment.google_event_id && customer) await calendarClient().events.patch({ calendarId: CALENDAR_ID, eventId: appointment.google_event_id, requestBody: { summary: `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${appointment.service_name}`, description: `סטטוס: confirmed\\nלקוחה: ${customer.first_name} ${customer.last_name}\\nנייד: ${customer.phone}\\nטיפול: ${appointment.service_name}` } });";
 const googlePatchSafe = "if (appointment.google_event_id && customer) try { await calendarClient().events.patch({ calendarId: CALENDAR_ID, eventId: appointment.google_event_id, requestBody: { summary: `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${appointment.service_name}`, description: `סטטוס: confirmed\\nלקוחה: ${customer.first_name} ${customer.last_name}\\nנייד: ${customer.phone}\\nטיפול: ${appointment.service_name}` } }); } catch (googleError) { console.error('Google approval sync failed', googleError); }";
@@ -96,15 +79,13 @@ const oldCalendarInsert = [
   "    const event = await calendar.events.insert({ calendarId: CALENDAR_ID, requestBody: { summary: eventTitle, description: `סטטוס: ${status}\\nלקוחה: ${customer.first_name} ${customer.last_name}\\nנייד: ${customer.phone}\\nטיפול: ${booking.service}\\nתוספות: ${booking.extra || 'ללא'}\\nמחיר: ₪${booking.price}\\nזמן טיפול: ${booking.minutes} דקות\\nBuffer: ${BUFFER_MINUTES} דקות`, start: { dateTime: start.toISO(), timeZone: TZ }, end: { dateTime: blockedEnd.toISO(), timeZone: TZ }, transparency: 'opaque' } });",
   "    createdEventId = event.data.id; const extras = booking.extra ? [{ name: booking.extra }] : [];"
 ].join('\n');
-const newCalendarInsert = "    const extras = booking.extra ? [{ name: booking.extra }] : [];";
-source = replaceRequired(source, oldCalendarInsert, newCalendarInsert, 'blocking calendar insert');
+source = replaceRequired(source, oldCalendarInsert, "    const extras = booking.extra ? [{ name: booking.extra }] : [];", 'blocking calendar insert');
 
-source = replaceRequired(
-  source,
-  "starts_at: start.toUTC().toISO(), ends_at: blockedEnd.toUTC().toISO(), google_event_id: createdEventId, status",
-  "starts_at: startIso, ends_at: endIso, google_event_id: null, status",
-  'appointment timestamps'
-);
+source = replaceRequired(source,"starts_at: start.toUTC().toISO(), ends_at: blockedEnd.toUTC().toISO(), google_event_id: createdEventId, status","starts_at: startIso, ends_at: endIso, google_event_id: null, status",'appointment timestamps');
+
+const oldNotification = "    if (!isAdminCreated) await supabase.from('admin_notifications').insert({ type: 'appointment_updated', title: 'תור ממתין לאישור', body: `${customer.first_name} ${customer.last_name} ביקשה ${booking.service}`, customer_id: customer.id, appointment_id: appointment.id, metadata: { starts_at: appointment.starts_at, status: 'pending' } });";
+const newNotification = "    if (!isAdminCreated) supabase.from('admin_notifications').insert({ type: 'appointment_updated', title: 'תור ממתין לאישור', body: `${customer.first_name} ${customer.last_name} ביקשה ${booking.service}`, customer_id: customer.id, appointment_id: appointment.id, metadata: { starts_at: appointment.starts_at, status: 'pending' } }).then(({ error }) => { if (error) console.error('Admin notification failed', error); }).catch(error => console.error('Admin notification failed', error));";
+source = replaceRequired(source, oldNotification, newNotification, 'booking notification');
 
 const oldResponse = "    res.status(201).json({ ok: true, appointment, eventId: createdEventId });";
 const newResponse = [
