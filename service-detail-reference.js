@@ -1,5 +1,5 @@
 (function(){
- const BUILD='20260820-service-detail-ref-v2';
+ const BUILD='20260820-service-detail-ref-v3';
  const ICONS={gel:'/assets/%D7%9E%D7%A0%D7%99%D7%A7%D7%95%D7%A8%20%D7%92%D7%9C.png',new:'/assets/ChatGPT%20Image%20Aug%2019%2C%202026%2C%2004_04_17%20PM.png',fill:'/assets/%D7%9E%D7%99%D7%9C%D7%95%D7%99.png',repair:'/assets/%D7%94%D7%A9%D7%9C%D7%9E%D7%94.png',remove:'/assets/%D7%94%D7%A1%D7%A8%D7%94.png'};
  const COPY={
   gel:{desc:'מניקור ג׳ל מוקפד במראה נקי ומדויק, כולל הכנת הציפורן, התאמת צורה ומריחה מקצועית.',include:['ייעוץ והתאמת צורה','מניקור והכנת הציפורן','מריחת ג׳ל וגימור מדויק']},
@@ -22,14 +22,14 @@
  #detail .service-detail-desc{font-size:12px!important;line-height:1.65!important;color:#687b78!important;max-width:250px!important;margin:0 auto 9px!important;font-weight:300!important}
  #detail .service-detail-from{font-size:11px!important;color:#778582!important;margin:0 0 1px!important;line-height:1.2!important}
  #detail .service-detail-price{font-size:27px!important;line-height:1.15!important;font-weight:400!important;color:#405f5c!important;margin:0 0 13px!important;direction:ltr!important}
- #detail .service-detail-separator{height:1px!important;width:100%!important;background:rgba(47,113,107,.14)!important;margin:0 0 10px!important}
+ #detail .service-detail-separator{height:1px!important;width:100%!important;margin:0 0 10px!important;background:linear-gradient(90deg,rgba(47,113,107,0) 0%,rgba(47,113,107,.18) 13%,rgba(47,113,107,.78) 50%,rgba(47,113,107,.18) 87%,rgba(47,113,107,0) 100%)!important}
  #detail .service-detail-duration-label{font-size:11px!important;color:#7a8785!important;margin:0 0 4px!important;line-height:1.2!important}
  #detail .service-detail-duration{font-size:13px!important;color:#526d69!important;margin:0 0 14px!important;line-height:1.3!important}
  #detail .service-detail-book{width:100%!important;height:52px!important;border:0!important;border-radius:10px!important;padding:0 14px!important;background:linear-gradient(90deg,#397d76,#276a64)!important;color:white!important;font-size:17px!important;font-weight:600!important;box-shadow:0 6px 14px rgba(37,93,87,.12)!important;margin:0 0 14px!important}
  #detail .service-detail-include{border-radius:16px!important;padding:14px 20px 13px!important;background:rgba(255,255,255,.48)!important;border:1px solid rgba(255,255,255,.88)!important;box-shadow:0 5px 16px rgba(70,72,66,.06)!important;text-align:right!important}
  #detail .service-detail-include h3{text-align:center!important;font-size:13px!important;font-weight:500!important;margin:0 0 9px!important;color:#315c57!important}
- #detail .service-detail-include p{position:relative!important;font-size:12px!important;color:#607572!important;margin:7px 0!important;padding:0 0 0 28px!important;line-height:1.45!important;text-align:right!important}
- #detail .service-detail-include p:after{content:'✓'!important;position:absolute!important;left:0!important;top:-1px!important;color:#2f716b!important;font-size:17px!important;font-weight:400!important}.service-detail-include p:before{content:none!important}
+ #detail .service-detail-include p{position:relative!important;font-size:12px!important;color:#607572!important;margin:7px 0!important;padding:0 26px 0 0!important;line-height:1.45!important;text-align:right!important;direction:rtl!important}
+ #detail .service-detail-include p:before{content:'✓'!important;position:absolute!important;right:0!important;top:-1px!important;color:#2f716b!important;font-size:17px!important;font-weight:400!important}.service-detail-include p:after{content:none!important}
  @media(max-height:760px){#detail{padding-top:8px!important}#detail .top{height:38px!important;min-height:38px!important}#detail .service-detail-icon{width:105px!important;height:92px!important;margin:-5px auto 2px!important}#detail .service-detail-icon img{width:98px!important;height:92px!important}#detail .service-detail-ref h1{font-size:20px!important;margin-bottom:8px!important}#detail .service-detail-desc{font-size:11px!important;line-height:1.5!important;margin-bottom:6px!important}#detail .service-detail-price{font-size:24px!important;margin-bottom:8px!important}#detail .service-detail-duration{margin-bottom:9px!important}#detail .service-detail-book{height:46px!important;margin-bottom:9px!important}#detail .service-detail-include{padding:10px 18px 8px!important}#detail .service-detail-include p{margin:5px 0!important}}
  `;document.head.appendChild(s);
  const original=window.detail;
