@@ -17,47 +17,70 @@
   `;
   document.head.appendChild(style);
 
-  function isStandalone(){return window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;}
+  function isStandalone(){return Boolean(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;}
   function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent||'');}
-  function homeIsActive(){const home=document.getElementById('home');return Boolean(home&&(home.classList.contains('active')||getComputedStyle(home).display!=='none'&&getComputedStyle(home).visibility!=='hidden'));}
+  function isGoogleInApp(){const ua=navigator.userAgent||'';return /GSA|GoogleApp|CriOS/i.test(ua)&&isIOS();}
+  function homeIsActive(){const home=document.getElementById('home');if(!home)return false;return home.classList.contains('active')||(getComputedStyle(home).display!=='none'&&getComputedStyle(home).visibility!=='hidden');}
 
   let deferredPrompt=null;
   let shownThisSession=false;
+  let scheduled=false;
+
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
   window.addEventListener('appinstalled',()=>{document.querySelector('.amit-install-overlay')?.remove();deferredPrompt=null;shownThisSession=true;});
 
   function closePrompt(){document.querySelector('.amit-install-overlay')?.remove();shownThisSession=true;}
+
   function showGuide(card){
     card.querySelector('.amit-install-guide')?.remove();
     const guide=document.createElement('div');
     guide.className='amit-install-guide';
-    guide.innerHTML=isIOS()?'לחצי על כפתור השיתוף בדפדפן, גללי ובחרי ״הוספה למסך הבית״. לאחר מכן AMIT TOUCH תיפתח כמו אפליקציה.':'פתחי את תפריט הדפדפן ובחרי ״התקנת אפליקציה״ או ״הוספה למסך הבית״.';
+    if(isGoogleInApp()) guide.textContent='באייפון דרך Google: פתחי את הקישור ב Safari, לחצי על כפתור השיתוף ובחרי ״הוספה למסך הבית״.';
+    else if(isIOS()) guide.textContent='לחצי על כפתור השיתוף ב Safari ובחרי ״הוספה למסך הבית״.';
+    else guide.textContent='פתחי את תפריט הדפדפן ובחרי ״התקנת אפליקציה״ או ״הוספה למסך הבית״.';
     card.appendChild(guide);
   }
 
   async function installOrGuide(card){
     if(deferredPrompt){
-      try{deferredPrompt.prompt();await deferredPrompt.userChoice;}catch(_){ }
+      try{deferredPrompt.prompt();await deferredPrompt.userChoice;}catch(error){console.warn('Install prompt failed',error);}
       deferredPrompt=null;
-      document.querySelector('.amit-install-overlay')?.remove();
-      shownThisSession=true;
+      closePrompt();
       return;
     }
     showGuide(card);
   }
 
-  function showPrompt(){
-    if(isStandalone()||shownThisSession||!homeIsActive()||document.querySelector('.amit-install-overlay'))return;
-    const overlay=document.createElement('div');overlay.className='amit-install-overlay';
-    overlay.innerHTML=`<div class="amit-install-card"><img src="/assets/amitouch_logo_vector.png" alt="AMIT TOUCH"><h2>שמרי את AMIT TOUCH במסך הבית</h2><p>נראה שנכנסת דרך הדפדפן. אפשר לשמור את הממשק במסך הבית ולפתוח אותו בפעם הבאה כמו אפליקציה.</p><div class="amit-install-actions"><button class="amit-install-primary" type="button">איך שומרים במסך הבית?</button><button class="amit-install-secondary" type="button">לא עכשיו</button></div></div>`;
+  function showPrompt(force){
+    if(isStandalone()||shownThisSession||document.querySelector('.amit-install-overlay'))return;
+    if(!force&&!homeIsActive())return;
+    const overlay=document.createElement('div');
+    overlay.className='amit-install-overlay';
+    overlay.innerHTML=`<div class="amit-install-card"><img src="/assets/amitouch_logo_vector.png" alt="AMIT TOUCH"><h2>שמרי את AMIT TOUCH כאפליקציה</h2><p>נכנסת דרך הדפדפן. אפשר לשמור את AMIT TOUCH במסך הבית ולפתוח אותה בפעם הבאה כמו אפליקציה.</p><div class="amit-install-actions"><button class="amit-install-primary" type="button">שמירה במסך הבית</button><button class="amit-install-secondary" type="button">לא עכשיו</button></div></div>`;
     document.body.appendChild(overlay);
     const card=overlay.querySelector('.amit-install-card');
-    overlay.querySelector('.amit-install-primary').onclick=()=>installOrGuide(card);
-    overlay.querySelector('.amit-install-secondary').onclick=closePrompt;
+    overlay.querySelector('.amit-install-primary').addEventListener('click',()=>installOrGuide(card));
+    overlay.querySelector('.amit-install-secondary').addEventListener('click',closePrompt);
   }
 
-  function maybeShow(){if(!isStandalone()&&homeIsActive())setTimeout(showPrompt,450);}
-  const observer=new MutationObserver(maybeShow);
-  const start=()=>{observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style'],childList:true});maybeShow();};
+  function schedulePrompt(force){
+    if(isStandalone()||shownThisSession||scheduled)return;
+    scheduled=true;
+    setTimeout(()=>{scheduled=false;showPrompt(force);},650);
+  }
+
+  function maybeShow(){
+    if(isStandalone()||shownThisSession)return;
+    if(homeIsActive())schedulePrompt(false);
+  }
+
+  function start(){
+    const observer=new MutationObserver(maybeShow);
+    observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style'],childList:true});
+    maybeShow();
+    if(isGoogleInApp()) setTimeout(()=>showPrompt(true),1400);
+    setTimeout(maybeShow,2200);
+  }
+
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
