@@ -7,7 +7,7 @@
   splash.style.opacity='1';
   splash.style.visibility='visible';
   splash.style.pointerEvents='auto';
-  const splashLogo=splash.querySelector('img.splash-logo,img.splash-brand-logo');const logoUrl='/assets/amitouch_logo_vector.png?v=20260820-splash-stable-v2';if(splashLogo){splashLogo.classList.remove('splash-logo');splashLogo.classList.add('splash-brand-logo');splashLogo.src=logoUrl;}
+  const splashLogo=splash.querySelector('img.splash-logo,img.splash-brand-logo');const logoUrl='/assets/amitouch_logo_vector.png?v=20260820-splash-final';if(splashLogo){splashLogo.classList.remove('splash-logo');splashLogo.classList.add('splash-brand-logo');splashLogo.src=logoUrl;}
   const tag=splash.querySelector('.splash-tag');if(tag){tag.innerHTML='<span class="splash-tag-line">הטאץ׳ הקטן שעושה</span><span class="splash-tag-line">את כל ההבדל</span>';}
   const guard=document.createElement('style');guard.id='amit-touch-splash-guard';guard.textContent=`#splash.brand-loading,#splash.brand-ready,#splash.brand-ready.hide:not(.brand-done){opacity:1!important;visibility:visible!important;pointer-events:auto!important}#splash.brand-done,#splash.brand-done.hide{opacity:0!important;visibility:hidden!important;pointer-events:none!important}`;document.head.appendChild(guard);
   async function join(parts){const texts=await Promise.all(parts.map(p=>fetch(p,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('asset '+p);return r.text();})));return texts.join('').replace(/\s+/g,'');}
@@ -32,5 +32,6 @@
     if(document.fonts&&document.fonts.load){try{await document.fonts.load("100 25px 'GveretLevin'");}catch(_){}}
     document.querySelectorAll('[data-handwriting]').forEach(el=>el.classList.add('handwriting'));window.AMIT_TOUCH_HANDWRITING_FONT='GveretLevin';
   }catch(e){console.error('AMIT TOUCH brand assets failed',e);}
-  splash.classList.remove('brand-loading','hide');splash.classList.add('brand-ready');splash.style.visibility='visible';splash.style.opacity='1';window.clearTimeout(window.__amitTouchSplashTimer);window.__amitTouchSplashTimer=window.setTimeout(()=>{splash.classList.add('brand-done','hide');},3000);
+  splash.classList.remove('brand-loading','hide');splash.classList.add('brand-ready');splash.style.visibility='visible';splash.style.opacity='1';
+  window.dispatchEvent(new CustomEvent('amit:splash-ready'));
 })();
