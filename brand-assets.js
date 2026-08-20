@@ -2,9 +2,14 @@
   if(window.__AMIT_TOUCH_SPLASH_CONTROLLER__)return;
   window.__AMIT_TOUCH_SPLASH_CONTROLLER__=true;
   const splash=document.getElementById('splash');if(!splash)return;
-  splash.classList.remove('brand-ready','brand-done','hide');splash.classList.add('brand-loading');splash.style.opacity='0';splash.style.visibility='hidden';
-  const splashLogo=splash.querySelector('img.splash-logo');const logoUrl='/assets/amitouch_logo_vector.png?v=20260820-min-font-16';if(splashLogo){splashLogo.classList.remove('splash-logo');splashLogo.classList.add('splash-brand-logo');splashLogo.src=logoUrl;}
-  const guard=document.createElement('style');guard.id='amit-touch-splash-guard';guard.textContent=`#splash.brand-loading{opacity:0!important;visibility:hidden!important;pointer-events:none!important}#splash.brand-ready,#splash.brand-ready.hide:not(.brand-done){opacity:1!important;visibility:visible!important;pointer-events:auto!important}#splash.brand-done,#splash.brand-done.hide{opacity:0!important;visibility:hidden!important;pointer-events:none!important}`;document.head.appendChild(guard);
+  splash.classList.remove('brand-done','hide');
+  splash.classList.add('brand-loading','brand-ready');
+  splash.style.opacity='1';
+  splash.style.visibility='visible';
+  splash.style.pointerEvents='auto';
+  const splashLogo=splash.querySelector('img.splash-logo,img.splash-brand-logo');const logoUrl='/assets/amitouch_logo_vector.png?v=20260820-splash-stable-v2';if(splashLogo){splashLogo.classList.remove('splash-logo');splashLogo.classList.add('splash-brand-logo');splashLogo.src=logoUrl;}
+  const tag=splash.querySelector('.splash-tag');if(tag){tag.innerHTML='<span class="splash-tag-line">הטאץ׳ הקטן שעושה</span><span class="splash-tag-line">את כל ההבדל</span>';}
+  const guard=document.createElement('style');guard.id='amit-touch-splash-guard';guard.textContent=`#splash.brand-loading,#splash.brand-ready,#splash.brand-ready.hide:not(.brand-done){opacity:1!important;visibility:visible!important;pointer-events:auto!important}#splash.brand-done,#splash.brand-done.hide{opacity:0!important;visibility:hidden!important;pointer-events:none!important}`;document.head.appendChild(guard);
   async function join(parts){const texts=await Promise.all(parts.map(p=>fetch(p,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('asset '+p);return r.text();})));return texts.join('').replace(/\s+/g,'');}
   function base64BlobUrl(b64,type){const bin=atob(b64);const bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return URL.createObjectURL(new Blob([bytes],{type}));}
   try{
@@ -13,7 +18,6 @@
     await Promise.all([new Promise(resolve=>{const i=new Image();i.onload=i.onerror=resolve;i.src=logoUrl;}),new Promise(resolve=>{const i=new Image();i.onload=i.onerror=resolve;i.src=heartUrl;}),new Promise(resolve=>{const i=new Image();i.onload=i.onerror=resolve;i.src=imgUrl;})]);
     document.querySelectorAll('img.logo,img.splash-logo,img.splash-brand-logo').forEach(el=>{el.src=logoUrl;});
     const oldHeart=splash.querySelector('.splash-heart');if(oldHeart){oldHeart.innerHTML='';const heart=document.createElement('img');heart.src=heartUrl;heart.alt='';heart.className='splash-heart-image';oldHeart.appendChild(heart);}
-    const tag=splash.querySelector('.splash-tag');if(tag){tag.innerHTML='<span class="splash-tag-line">הטאץ׳ הקטן שעושה</span><span class="splash-tag-line">את כל ההבדל</span>';}
     const style=document.createElement('style');style.id='amit-touch-brand-style';style.textContent=`
       @font-face{font-family:'GveretLevin';src:url('${fontUrl}') format('woff2');font-weight:100 900;font-style:normal;font-display:block}
       :root{--hand:'GveretLevin',cursive;--ui-font:'Inter',Arial,sans-serif}
@@ -27,6 +31,6 @@
       .handwriting,.handwriting *,[data-handwriting],[data-handwriting] *,.hero-copy strong,.confirm .heart{font-family:var(--hand)!important;font-weight:100!important;font-variation-settings:'wght' 100!important;font-style:normal!important;font-synthesis:none!important;letter-spacing:0!important}.handwriting::before,.handwriting::after,[data-handwriting]::before,[data-handwriting]::after,.hero-copy strong::before,.hero-copy strong::after,.confirm .heart::before,.confirm .heart::after{font-family:var(--hand)!important}.hero-copy strong{font-size:25px!important;line-height:1.25!important}.confirm .heart{font-size:24px!important;line-height:1.25!important}`;document.head.appendChild(style);
     if(document.fonts&&document.fonts.load){try{await document.fonts.load("100 25px 'GveretLevin'");}catch(_){}}
     document.querySelectorAll('[data-handwriting]').forEach(el=>el.classList.add('handwriting'));window.AMIT_TOUCH_HANDWRITING_FONT='GveretLevin';
-    splash.classList.remove('brand-loading','hide');splash.classList.add('brand-ready');splash.style.visibility='visible';splash.style.opacity='1';window.clearTimeout(window.__amitTouchSplashTimer);window.__amitTouchSplashTimer=window.setTimeout(()=>{splash.classList.add('brand-done','hide');},3000);
-  }catch(e){console.error('AMIT TOUCH brand assets failed',e);splash.classList.remove('brand-loading','hide');splash.classList.add('brand-ready');splash.style.visibility='visible';splash.style.opacity='1';window.clearTimeout(window.__amitTouchSplashTimer);window.__amitTouchSplashTimer=window.setTimeout(()=>splash.classList.add('brand-done','hide'),3000);}
+  }catch(e){console.error('AMIT TOUCH brand assets failed',e);}
+  splash.classList.remove('brand-loading','hide');splash.classList.add('brand-ready');splash.style.visibility='visible';splash.style.opacity='1';window.clearTimeout(window.__amitTouchSplashTimer);window.__amitTouchSplashTimer=window.setTimeout(()=>{splash.classList.add('brand-done','hide');},3000);
 })();
