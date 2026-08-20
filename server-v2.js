@@ -24,6 +24,12 @@ function normalizePhone(value = '') {
   return phone;
 }
 
+function getAppointmentStartWindow(day) {
+  if (day.weekday === 5) return { firstHour: 8, lastHour: 14, label: '08:00–14:00' };
+  if (day.weekday === 6) return { firstHour: 20, lastHour: 23, label: '20:00–23:00' };
+  return { firstHour: WORKDAY_START_HOUR, lastHour: LAST_APPOINTMENT_START_HOUR, label: '08:00–20:00' };
+}
+
 function supabaseClient() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
@@ -136,7 +142,7 @@ app.get('/api/health', async (_req, res) => {
     if (error) throw error;
     const calendar = calendarClient();
     const calendarIds = await getAccessibleCalendarIds(calendar);
-    res.json({ ok: true, database: true, calendarConfigured: true, approvalFlow: true, calendarsVisible: calendarIds.length, icloudConfigured: icloudConfigured(), appointmentStartHours: '08:00–20:00', bufferMinutes: BUFFER_MINUTES });
+    res.json({ ok: true, database: true, calendarConfigured: true, approvalFlow: true, calendarsVisible: calendarIds.length, icloudConfigured: icloudConfigured(), appointmentStartHours: { sundayToThursday: '08:00–20:00', friday: '08:00–14:00', saturday: '20:00–23:00' }, bufferMinutes: BUFFER_MINUTES });
   } catch (error) { console.error(error); res.status(500).json({ ok: false, database: false }); }
 });
 
@@ -178,14 +184,15 @@ app.get('/api/availability', async (req, res) => {
     const calendar = calendarClient();
     const { calendarIds, icloudCalendars, busy } = await getBusyPeriods(calendar, dayStart.toUTC().toISO(), dayEnd.toUTC().toISO());
     const slots = [];
-    const firstStart = dayStart.set({ hour: WORKDAY_START_HOUR, minute: 0 });
-    const lastStart = dayStart.set({ hour: LAST_APPOINTMENT_START_HOUR, minute: 0 });
+    const window = getAppointmentStartWindow(dayStart);
+    const firstStart = dayStart.set({ hour: window.firstHour, minute: 0 });
+    const lastStart = dayStart.set({ hour: window.lastHour, minute: 0 });
     for (let t = firstStart; t <= lastStart; t = t.plus({ minutes: 30 })) {
       const end = t.plus({ minutes: duration });
       const conflict = busy.some(item => t.toMillis() < DateTime.fromISO(item.end).toMillis() && end.toMillis() > DateTime.fromISO(item.start).toMillis());
       if (!conflict) slots.push(t.toFormat('HH:mm'));
     }
-    res.json({ date, slots, calendarsChecked: calendarIds.length, icloudCalendarsChecked: icloudCalendars, appointmentStartHours: '08:00–20:00', bufferMinutes: BUFFER_MINUTES });
+    res.json({ date, slots, calendarsChecked: calendarIds.length, icloudCalendarsChecked: icloudCalendars, appointmentStartHours: window.label, bufferMinutes: BUFFER_MINUTES });
   } catch (error) { console.error(error); res.status(500).json({ error: 'CALENDAR_AVAILABILITY_FAILED' }); }
 });
 
@@ -198,8 +205,9 @@ app.post('/api/book', async (req, res) => {
     const isAdminCreated = Boolean(booking.createdByAdmin); const status = isAdminCreated ? 'confirmed' : 'pending';
     const start = DateTime.fromISO(`${booking.date}T${booking.time}`, { zone: TZ });
     const blockedEnd = start.plus({ minutes: Number(booking.minutes) + BUFFER_MINUTES });
-    const firstStart = start.startOf('day').set({ hour: WORKDAY_START_HOUR, minute: 0 });
-    const lastStart = start.startOf('day').set({ hour: LAST_APPOINTMENT_START_HOUR, minute: 0 });
+    const window = getAppointmentStartWindow(start);
+    const firstStart = start.startOf('day').set({ hour: window.firstHour, minute: 0 });
+    const lastStart = start.startOf('day').set({ hour: window.lastHour, minute: 0 });
     if (start < firstStart || start > lastStart) return res.status(409).json({ error: 'OUTSIDE_WORKING_HOURS' });
     const calendar = calendarClient(); const { busy } = await getBusyPeriods(calendar, start.toUTC().toISO(), blockedEnd.toUTC().toISO()); if (busy.length) return res.status(409).json({ error: 'SLOT_TAKEN' });
     const eventTitle = isAdminCreated ? `AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}` : `ממתין לאישור · AMIT TOUCH · ${customer.first_name} ${customer.last_name} · ${booking.service}`;
