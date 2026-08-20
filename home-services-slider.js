@@ -1,5 +1,5 @@
 (function(){
-  const BUILD='20260820-home-services-local-build-v7';
+  const BUILD='20260820-home-services-build-icon-v8';
   const home=document.getElementById('home');
   if(!home)return;
   const grid=home.querySelector('.quick-grid');
@@ -24,7 +24,7 @@
 
   const services=[
     {label:'מניקור ג׳ל',icon:'/assets/%D7%9E%D7%A0%D7%99%D7%A7%D7%95%D7%A8%20%D7%92%D7%9C.png'},
-    {label:'בניה',icon:'/assets/%D7%91%D7%A0%D7%99%D7%99%D7%94.png?asset=50c128a0310c454ab6afdee1f529606807d46ce5'},
+    {label:'בניה',icon:'/assets/%D7%91%D7%A0%D7%99%D7%99%D7%94.png'},
     {label:'מילוי',icon:'/assets/%D7%9E%D7%99%D7%9C%D7%95%D7%99.png'},
     {label:'תיקון',icon:'/assets/%D7%94%D7%A9%D7%9C%D7%9E%D7%94.png'},
     {label:'הסרה',icon:'/assets/%D7%94%D7%A1%D7%A8%D7%94.png'}
@@ -36,8 +36,7 @@
     btn.type='button';
     btn.className='quick glass';
     btn.setAttribute('aria-label',service.label);
-    const sep=service.icon.includes('?')?'&':'?';
-    btn.innerHTML=`<img class="service-art" src="${service.icon}${sep}v=${BUILD}" alt=""><b>${service.label}</b>`;
+    btn.innerHTML=`<img class="service-art" src="${service.icon}?v=${BUILD}" alt=""><b>${service.label}</b>`;
     btn.addEventListener('click',()=>{if(typeof window.services==='function')window.services();else if(typeof window.show==='function')window.show('services');});
     grid.appendChild(btn);
   });
