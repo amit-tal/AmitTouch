@@ -1,0 +1,15 @@
+(function(){
+'use strict';
+const ADMIN_KEY='amit-touch-admin-session-v1';
+function isAdmin(){try{return localStorage.getItem(ADMIN_KEY)==='1'||sessionStorage.getItem(ADMIN_KEY)==='1'||window.__AMIT_ADMIN_SESSION__===true}catch(_){return !!window.__AMIT_ADMIN_SESSION__}}
+function ensureRoot(){let root=document.getElementById('amitAdminRoot');if(root)return root;root=document.createElement('div');root.id='amitAdminRoot';root.style.cssText='display:none;min-height:100vh;';document.body.appendChild(root);return root}
+function ensureAdminScreen(){let admin=document.getElementById('admin');if(!admin){admin=document.createElement('section');admin.id='admin';admin.className='screen';document.querySelector('main.app')?.appendChild(admin)}let body=document.getElementById('adminBody');if(!body){body=document.createElement('div');body.id='adminBody';admin.appendChild(body)}return {admin,body}}
+function lockAdmin(){if(!isAdmin())return false;window.__AMIT_ADMIN_SESSION__=true;document.body.classList.add('admin-v2','admin-session-active');const {admin,body}=ensureAdminScreen();document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));admin.classList.add('active');document.getElementById('nav')?.classList.remove('show');document.querySelectorAll('#nav,.nav').forEach(n=>n.style.display='none');const app=document.querySelector('main.app');if(app)app.style.maxWidth='430px';if(typeof window.renderAdmin==='function')Promise.resolve(window.renderAdmin()).catch(console.error);return true}
+const css=document.createElement('style');css.id='admin-gate-v3-style';css.textContent=`body.admin-session-active #nav,body.admin-session-active .nav{display:none!important}body.admin-session-active #admin{display:block!important}body.admin-session-active .screen:not(#admin){display:none!important}body.admin-session-active #adminBody{min-height:calc(100vh - 24px)!important}`;document.head.appendChild(css);
+window.AMIT_TOUCH_ADMIN_LOCK=lockAdmin;
+const originalShow=window.show;if(typeof originalShow==='function')window.show=function(id){if(isAdmin()&&id!=='login'&&id!=='register'){lockAdmin();return}return originalShow.apply(this,arguments)};
+const originalEnter=window.enterApp;if(typeof originalEnter==='function')window.enterApp=function(){if(isAdmin()){lockAdmin();return}return originalEnter.apply(this,arguments)};
+window.addEventListener('amit:session-ready',()=>setTimeout(lockAdmin,0));window.addEventListener('pageshow',()=>setTimeout(lockAdmin,0));window.addEventListener('popstate',()=>setTimeout(lockAdmin,0));document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(lockAdmin,0)});
+const obs=new MutationObserver(()=>{if(isAdmin()&&!document.querySelector('#admin.active'))lockAdmin()});obs.observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['class']});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(lockAdmin,0),{once:true});else setTimeout(lockAdmin,0);
+})();
