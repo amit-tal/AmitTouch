@@ -1,7 +1,7 @@
 (function(){'use strict';
-const ID='admin-home-bell-fix-v4';['admin-home-bell-fix-v1','admin-home-bell-fix-v2','admin-home-bell-fix-v3'].forEach(x=>document.getElementById(x)?.remove());if(document.getElementById(ID))return;const s=document.createElement('style');s.id=ID;s.textContent=`
-body.admin-session-active .admin-home-canonical .ah-bell{width:52px!important;height:52px!important;overflow:visible!important}
-body.admin-session-active .admin-home-canonical .ah-bell img{width:44px!important;height:44px!important;object-fit:contain!important;display:block!important}
+const ID='admin-home-bell-fix-v5';['admin-home-bell-fix-v1','admin-home-bell-fix-v2','admin-home-bell-fix-v3','admin-home-bell-fix-v4'].forEach(x=>document.getElementById(x)?.remove());if(document.getElementById(ID))return;const s=document.createElement('style');s.id=ID;s.textContent=`
+body.admin-session-active .admin-home-canonical .ah-bell{width:56px!important;height:56px!important;overflow:visible!important}
+body.admin-session-active .admin-home-canonical .ah-bell img{width:48px!important;height:48px!important;object-fit:contain!important;display:block!important}
 body.admin-session-active .admin-home-canonical .ah-bell-dot{position:absolute!important;top:5px!important;right:7px!important;width:12px!important;height:12px!important;border-radius:50%!important;background:#f2b0ae!important;border:2px solid #fbf6f0!important;box-sizing:border-box!important;box-shadow:0 1px 4px rgba(99,65,65,.12)!important;z-index:10!important;pointer-events:none!important}
 body.admin-session-active .admin-home-canonical .ah-bell.is-read .ah-bell-dot{display:none!important}
 `;document.head.appendChild(s);
