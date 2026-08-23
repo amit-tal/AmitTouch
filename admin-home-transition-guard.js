@@ -15,4 +15,5 @@ new MutationObserver(()=>{const af=document.querySelector('#adminBody>.af');if(!
 window.addEventListener('amit:session-ready',()=>{if(window.__AMIT_ADMIN_SESSION__===true)start();requestAnimationFrame(finish)});
 window.addEventListener('pageshow',()=>{if(window.__AMIT_ADMIN_SESSION__===true)start();requestAnimationFrame(finish)});
 requestAnimationFrame(finish);
+if(!document.querySelector('script[data-amit-calendar-future-overlay]')){const s=document.createElement('script');s.src='/admin-calendar-future-overlay.js?v=20260823-future-overlay-v1';s.dataset.amitCalendarFutureOverlay='1';document.body.appendChild(s)}
 })();
