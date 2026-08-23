@@ -1,14 +1,13 @@
 (function(){
 'use strict';
-const STYLE_ID='admin-home-canonical-v1';
-if(document.getElementById(STYLE_ID))return;
+const STYLE_ID='admin-home-canonical-v2';document.getElementById('admin-home-canonical-v1')?.remove();if(document.getElementById(STYLE_ID))return;
 const style=document.createElement('style');style.id=STYLE_ID;style.textContent=`
 html,body,#adminBody{scrollbar-width:none!important;-ms-overflow-style:none!important}html::-webkit-scrollbar,body::-webkit-scrollbar,#adminBody::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
 body.admin-session-active #amitAdminRoot #adminBody{width:min(430px,100%)!important;margin:0 auto!important;padding:calc(max(28px,env(safe-area-inset-top)) + 4px) 18px calc(96px + env(safe-area-inset-bottom))!important;background:transparent!important}
 body.admin-session-active .af.admin-home-canonical{padding:0!important;min-height:calc(100dvh - 20px)!important;color:#173f3b!important;direction:rtl!important}
 body.admin-session-active .admin-home-canonical .ah-head{height:46px!important;position:relative!important;display:flex!important;align-items:flex-start!important;justify-content:center!important}
-body.admin-session-active .admin-home-canonical .ah-bell{position:absolute!important;left:0!important;top:0!important;width:38px!important;height:38px!important;padding:0!important;border:0!important;background:transparent!important;display:grid!important;place-items:center!important;z-index:5!important}
-body.admin-session-active .admin-home-canonical .ah-bell img{width:24px!important;height:24px!important;display:block!important;object-fit:contain!important}
+body.admin-session-active .admin-home-canonical .ah-bell{position:absolute!important;left:0!important;top:-2px!important;width:46px!important;height:46px!important;padding:0!important;border:0!important;background:transparent!important;display:grid!important;place-items:center!important;z-index:5!important}
+body.admin-session-active .admin-home-canonical .ah-bell img{width:34px!important;height:34px!important;display:block!important;object-fit:contain!important}
 body.admin-session-active .admin-home-canonical .ah-title-wrap{text-align:center!important;padding-top:1px!important}
 body.admin-session-active .admin-home-canonical .ah-title{margin:0!important;font-size:20px!important;line-height:1.2!important;font-weight:600!important;color:#173f3b!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:5px!important}
 body.admin-session-active .admin-home-canonical .ah-heart{width:28px!important;height:28px!important;object-fit:contain!important;filter:sepia(.2) saturate(1.45) hue-rotate(315deg)!important}
