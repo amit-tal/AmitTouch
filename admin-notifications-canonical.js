@@ -1,1 +1,1 @@
-(function(){'use strict';if(document.querySelector('script[data-admin-notifications-v4]'))return;const s=document.createElement('script');s.src='/admin-notifications-v4.js?v=20260823-notifications-v39';s.dataset.adminNotificationsV4='1';s.async=false;document.body.appendChild(s)})();
+(function(){'use strict';if(document.querySelector('script[data-admin-notifications-v4]'))return;const s=document.createElement('script');s.src='/admin-notifications-v4.js?v=20260823-notifications-v41';s.dataset.adminNotificationsV4='1';s.async=false;document.body.appendChild(s)})();
