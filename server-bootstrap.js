@@ -1,4 +1,5 @@
 import './preload.js';
+import './server-proposal-fast-prepatch.js';
 import './server-proposal-prepatch.js';
 import './server-customer-response-auth-prepatch.js';
 import './server-proposal-response-prepatch.js';
