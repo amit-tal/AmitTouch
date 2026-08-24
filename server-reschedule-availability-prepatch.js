@@ -18,6 +18,7 @@ app.get('/api/admin/appointments/:appointmentId/availability',async(req,res)=>{
     const dayEnd=dayStart.plus({days:1});
     const {data:rows,error:rowsError}=await supabase.from('appointments').select('id,starts_at,ends_at,status').neq('id',appointment.id).in('status',['pending','confirmed']).lt('starts_at',dayEnd.toUTC().toISO()).gt('ends_at',dayStart.toUTC().toISO());
     if(rowsError)throw rowsError;
+    const proposals=await activeProposalRows(supabase);
     const calendar=calendarClient();
     const {busy}=await getBusyPeriods(calendar,dayStart.toUTC().toISO(),dayEnd.toUTC().toISO());
     const hours=getAppointmentStartWindow(dayStart);
@@ -31,6 +32,8 @@ app.get('/api/admin/appointments/:appointmentId/availability',async(req,res)=>{
       const startMs=start.toMillis(),endMs=blockedEnd.toMillis();
       const dbClash=(rows||[]).some(a=>{const s=DateTime.fromISO(a.starts_at,{setZone:true}).toMillis(),e=DateTime.fromISO(a.ends_at,{setZone:true}).toMillis();return s<endMs&&e>startMs});
       if(dbClash)continue;
+      const proposalClash=(proposals||[]).some(row=>{if(String(row.appointment_id)===String(appointment.id))return false;const range=proposalRange(row.proposal);return range&&startMs<range.end.toMillis()&&endMs>range.start.toMillis()});
+      if(proposalClash)continue;
       if((busy||[]).some(item=>conflictsWithBusy(start,blockedEnd,item)))continue;
       slots.push(hh+':'+mm);
     }
