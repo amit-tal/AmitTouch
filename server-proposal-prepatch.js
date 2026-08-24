@@ -8,14 +8,53 @@ fs.readFileSync=function proposalPatchedReadFileSync(file,...args){
   const runtime=String.raw`
 function proposalBody(data){return JSON.stringify({kind:'reschedule_proposal',...data});}
 function parseProposalBody(value){try{const data=JSON.parse(String(value||''));return data&&data.kind==='reschedule_proposal'?data:null}catch(_){return null}}
+async function activeProposalRows(supabase){
+  const {data,error}=await supabase.from('customer_notifications').select('id,appointment_id,customer_id,body,created_at,type').in('type',['reschedule_proposal','reschedule_accepted','reschedule_rejected']).order('created_at',{ascending:false}).limit(500);
+  if(error)throw error;
+  const latest=new Map();
+  for(const row of data||[]){const key=String(row.appointment_id||'');if(!key||latest.has(key))continue;const parsed=parseProposalBody(row.body);if(parsed)latest.set(key,{...row,proposal:parsed});}
+  return [...latest.values()].filter(x=>x.type==='reschedule_proposal'&&x.proposal.status==='pending');
+}
+function proposalRange(p){
+  const start=DateTime.fromISO(String(p.date||'')+'T'+String(p.time||''),{zone:TZ});
+  if(!start.isValid)return null;
+  const end=start.plus({minutes:Number(p.minutes||60)+BUFFER_MINUTES});
+  return {start,end};
+}
 async function proposalSlotIsFree(supabase,appointment,start,blockedEnd){
   const startIso=start.toUTC().toISO(),endIso=blockedEnd.toUTC().toISO();
   const {data:conflicts,error}=await supabase.from('appointments').select('id').neq('id',appointment.id).in('status',['pending','confirmed']).lt('starts_at',endIso).gt('ends_at',startIso).limit(1);
   if(error)throw error;if(conflicts&&conflicts.length)return false;
+  const proposals=await activeProposalRows(supabase);
+  const proposalClash=proposals.some(row=>{if(String(row.appointment_id)===String(appointment.id))return false;const range=proposalRange(row.proposal);return range&&start.toMillis()<range.end.toMillis()&&blockedEnd.toMillis()>range.start.toMillis()});
+  if(proposalClash)return false;
   const calendar=calendarClient();
   const {busy}=await getBusyPeriods(calendar,startIso,endIso);
   return !busy.some(item=>conflictsWithBusy(start,blockedEnd,item));
 }
+app.get('/api/admin/calendar-items',async(_req,res)=>{
+  try{
+    const supabase=supabaseClient();
+    const {data:appointments,error}=await supabase.from('appointments').select('*,customer:customers(id,first_name,last_name,phone)').in('status',['pending','confirmed']).order('starts_at',{ascending:true});
+    if(error)throw error;
+    const active=await activeProposalRows(supabase);
+    const activeByAppointment=new Map(active.map(x=>[String(x.appointment_id),x]));
+    const items=[];
+    for(const a of appointments||[]){
+      const p=activeByAppointment.get(String(a.id));
+      const customer=a.customer||{};
+      const name=[customer.first_name,customer.last_name].filter(Boolean).join(' ')||'לקוחה';
+      if(p){
+        const pr=p.proposal,range=proposalRange(pr);if(!range)continue;
+        items.push({id:'proposal-'+p.id,appointmentId:a.id,name,phone:customer.phone||'',service:pr.service||a.service_name,date:range.start.setZone(TZ).toISODate(),start:range.start.setZone(TZ).toFormat('HH:mm'),end:range.start.plus({minutes:Number(pr.minutes||a.treatment_minutes||60)}).setZone(TZ).toFormat('HH:mm'),status:'pending_customer'});
+        continue;
+      }
+      const start=DateTime.fromISO(a.starts_at,{setZone:true}).setZone(TZ),end=DateTime.fromISO(a.ends_at,{setZone:true}).setZone(TZ);
+      items.push({id:a.id,appointmentId:a.id,name,phone:customer.phone||'',service:a.service_name||'טיפול',date:start.toISODate(),start:start.toFormat('HH:mm'),end:end.toFormat('HH:mm'),status:a.status==='confirmed'?'approved':'pending_admin'});
+    }
+    res.set('Cache-Control','no-store');res.json({items});
+  }catch(error){console.error('Admin calendar items failed',error);res.status(500).json({error:'ADMIN_CALENDAR_ITEMS_FAILED'})}
+});
 app.post('/api/admin/appointments/:appointmentId/propose',async(req,res)=>{
   try{
     const date=String(req.body.date||''),time=String(req.body.time||''),message=String(req.body.message||'').trim();
@@ -31,6 +70,8 @@ app.post('/api/admin/appointments/:appointmentId/propose',async(req,res)=>{
     const end=start.plus({minutes});
     const data={appointmentId:appointment.id,date,time,endTime:end.toFormat('HH:mm'),service:appointment.service_name,price:Number(appointment.total_price||0),minutes,message,status:'pending'};
     const body=proposalBody(data);
+    const {data:older}=await supabase.from('customer_notifications').select('id,body').eq('appointment_id',appointment.id).eq('type','reschedule_proposal');
+    for(const old of older||[]){const parsed=parseProposalBody(old.body);if(parsed&&parsed.status==='pending'){parsed.status='superseded';await supabase.from('customer_notifications').update({type:'reschedule_rejected',body:proposalBody(parsed)}).eq('id',old.id);}}
     const {data:notification,error:noticeError}=await supabase.from('customer_notifications').insert({customer_id:appointment.customer_id,appointment_id:appointment.id,type:'reschedule_proposal',title:'עמית הציעה לך מועד אחר',body}).select().single();
     if(noticeError)throw noticeError;
     try{await supabase.from('admin_notifications').insert({type:'reschedule_proposal_sent',title:'הצעת זמן נשלחה',body:customer.first_name+' '+customer.last_name+' · '+date+' · '+time,customer_id:appointment.customer_id,appointment_id:appointment.id,metadata:data})}catch(e){console.error('Proposal admin notification failed',e)}
