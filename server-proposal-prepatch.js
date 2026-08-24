@@ -32,6 +32,13 @@ async function proposalSlotIsFree(supabase,appointment,start,blockedEnd){
   const {busy}=await getBusyPeriods(calendar,startIso,endIso);
   return !busy.some(item=>conflictsWithBusy(start,blockedEnd,item));
 }
+async function proposalStillReservable(supabase,appointment,start,blockedEnd){
+  const startIso=start.toUTC().toISO(),endIso=blockedEnd.toUTC().toISO();
+  const {data:conflicts,error}=await supabase.from('appointments').select('id').neq('id',appointment.id).in('status',['pending','confirmed']).lt('starts_at',endIso).gt('ends_at',startIso).limit(1);
+  if(error)throw error;if(conflicts&&conflicts.length)return false;
+  const proposals=await activeProposalRows(supabase);
+  return !proposals.some(row=>{if(String(row.appointment_id)===String(appointment.id))return false;const range=proposalRange(row.proposal);return range&&start.toMillis()<range.end.toMillis()&&blockedEnd.toMillis()>range.start.toMillis()});
+}
 app.get('/api/admin/calendar-items',async(_req,res)=>{
   try{
     const supabase=supabaseClient();
@@ -74,7 +81,7 @@ app.post('/api/admin/appointments/:appointmentId/propose',async(req,res)=>{
     for(const old of older||[]){const parsed=parseProposalBody(old.body);if(parsed&&parsed.status==='pending'){parsed.status='superseded';await supabase.from('customer_notifications').update({type:'reschedule_rejected',body:proposalBody(parsed)}).eq('id',old.id);}}
     const {data:notification,error:noticeError}=await supabase.from('customer_notifications').insert({customer_id:appointment.customer_id,appointment_id:appointment.id,type:'reschedule_proposal',title:'עמית הציעה לך מועד אחר',body}).select().single();
     if(noticeError)throw noticeError;
-    try{await supabase.from('admin_notifications').insert({type:'reschedule_proposal_sent',title:'הצעת זמן נשלחה',body:customer.first_name+' '+customer.last_name+' · '+date+' · '+time,customer_id:appointment.customer_id,appointment_id:appointment.id,metadata:data})}catch(e){console.error('Proposal admin notification failed',e)}
+    try{await supabase.from('admin_notifications').insert({type:'reschedule_proposal_sent',title:'הצעת זמן נשלחה',body:customer.first_name+' '+customer.last_name+' · '+date+' · '+time,customer_id:appointment.customer_id,appointment_id:appointment.id,metadata:{...data,status:'pending_customer_response'}})}catch(e){console.error('Proposal admin notification failed',e)}
     res.status(201).json({ok:true,notification,proposal:data});
   }catch(error){console.error('Proposal failed',error);res.status(500).json({error:'PROPOSAL_FAILED'})}
 });
@@ -88,16 +95,17 @@ app.post('/api/customer-notifications/:notificationId/respond',async(req,res)=>{
     const proposal=parseProposalBody(notification.body);if(!proposal)return res.status(409).json({error:'NOT_A_PROPOSAL'});if(proposal.status!=='pending')return res.json({ok:true,status:proposal.status});
     const {data:appointment,error:apptError}=await supabase.from('appointments').select('*').eq('id',notification.appointment_id).single();if(apptError||!appointment)return res.status(404).json({error:'APPOINTMENT_NOT_FOUND'});
     if(decision==='reject'){
-      proposal.status='rejected';await supabase.from('customer_notifications').update({type:'reschedule_rejected',body:proposalBody(proposal)}).eq('id',notification.id);
-      try{await supabase.from('admin_notifications').insert({type:'reschedule_rejected',title:'הלקוחה דחתה את ההצעה',body:proposal.date+' · '+proposal.time,customer_id:notification.customer_id,appointment_id:appointment.id,metadata:proposal})}catch(e){console.error(e)}
+      proposal.status='rejected';await supabase.from('customer_notifications').update({type:'reschedule_rejected',body:proposalBody(proposal),updated_at:new Date().toISOString()}).eq('id',notification.id);
+      try{await supabase.from('admin_notifications').insert({type:'reschedule_rejected',title:'הלקוחה דחתה את ההצעה',body:proposal.date+' · '+proposal.time,customer_id:notification.customer_id,appointment_id:appointment.id,metadata:{...proposal,status:'rejected_customer_response'}})}catch(e){console.error(e)}
       return res.json({ok:true,status:'rejected'});
     }
     const start=DateTime.fromISO(proposal.date+'T'+proposal.time,{zone:TZ}),blockedEnd=start.plus({minutes:Number(appointment.treatment_minutes||proposal.minutes||60)+BUFFER_MINUTES});
-    if(!(await proposalSlotIsFree(supabase,appointment,start,blockedEnd)))return res.status(409).json({error:'SLOT_TAKEN'});
+    if(!(await proposalStillReservable(supabase,appointment,start,blockedEnd)))return res.status(409).json({error:'SLOT_TAKEN'});
+    proposal.status='accepted';
     const {data:updated,error:updateError}=await supabase.from('appointments').update({starts_at:start.toUTC().toISO(),ends_at:blockedEnd.toUTC().toISO(),status:'confirmed'}).eq('id',appointment.id).select().single();if(updateError)throw updateError;
-    const customer=await getCustomer(supabase,appointment.customer_id);try{await syncApprovedAppointmentToIcloud(updated,customer)}catch(e){console.error('Proposal iCloud sync failed',e)}
-    proposal.status='accepted';await supabase.from('customer_notifications').update({type:'reschedule_accepted',body:proposalBody(proposal)}).eq('id',notification.id);
-    try{await supabase.from('admin_notifications').insert({type:'reschedule_accepted',title:'הלקוחה אישרה את הזמן החדש',body:proposal.date+' · '+proposal.time,customer_id:notification.customer_id,appointment_id:appointment.id,metadata:proposal})}catch(e){console.error(e)}
+    await supabase.from('customer_notifications').update({type:'reschedule_accepted',body:proposalBody(proposal),updated_at:new Date().toISOString()}).eq('id',notification.id);
+    try{await supabase.from('admin_notifications').insert({type:'reschedule_accepted',title:'הלקוחה אישרה את הזמן החדש',body:proposal.date+' · '+proposal.time,customer_id:notification.customer_id,appointment_id:appointment.id,is_read:false,metadata:{...proposal,status:'accepted_customer_response'}})}catch(e){console.error(e)}
+    const customer=await getCustomer(supabase,appointment.customer_id);setImmediate(async()=>{try{await syncApprovedAppointmentToIcloud(updated,customer)}catch(e){console.error('Proposal iCloud sync failed',e)}});
     res.json({ok:true,status:'accepted',appointment:updated});
   }catch(error){console.error('Proposal response failed',error);res.status(500).json({error:'PROPOSAL_RESPONSE_FAILED'})}
 });
