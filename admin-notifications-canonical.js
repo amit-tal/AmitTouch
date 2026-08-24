@@ -7,6 +7,6 @@ const s=document.createElement('script');s.src='/admin-notifications-v4.js?v=202
 loadOnce('script[data-admin-notifications-layout-fix]','/admin-notifications-layout-fix.js?v=20260823-layout-v14','adminNotificationsLayoutFix');
 loadOnce('script[data-admin-notification-unread]','/admin-notification-unread.js?v=20260823-unread-v3','adminNotificationUnread');
 const old=document.querySelector('script[data-amіt="adminnotificationsreschedule"],script[src*="admin-notifications-reschedule-v5.js"]');if(old)old.remove();
-const r=document.createElement('script');r.src='/admin-notifications-reschedule-v5.js?v=20260823-reschedule-v8';r.dataset.adminNotificationsReschedule='1';r.async=false;r.onload=()=>{loadOnce('script[data-admin-reschedule-launch-fix]','/admin-reschedule-launch-fix.js?v=20260823-launch-v4','adminRescheduleLaunchFix');loadProposalFlow()};document.body.appendChild(r)
+const r=document.createElement('script');r.src='/admin-notifications-reschedule-v5.js?v=20260824-reschedule-v10';r.dataset.adminNotificationsReschedule='1';r.async=false;r.onload=()=>{loadOnce('script[data-admin-reschedule-launch-fix]','/admin-reschedule-launch-fix.js?v=20260823-launch-v4','adminRescheduleLaunchFix');loadProposalFlow()};document.body.appendChild(r)
 };document.body.appendChild(s)
 })();
