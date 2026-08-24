@@ -1,21 +1,97 @@
 import fs from 'fs';
-const originalReadFileSync=fs.readFileSync.bind(fs);
-fs.readFileSync=function proposalPatchedReadFileSync(file,...args){
-  const result=originalReadFileSync(file,...args);
-  if(!String(file||'').endsWith('server-v2.js'))return result;
-  const isBuffer=Buffer.isBuffer(result);let source=isBuffer?result.toString('utf8'):String(result);
-  if(source.includes("/api/admin/appointments/:appointmentId/propose"))return result;
-  const runtime=String.raw`
+const originalReadFileSync = fs.readFileSync.bind(fs);
+fs.readFileSync = function proposalPatchedReadFileSync(file, ...args) {
+  const result = originalReadFileSync(file, ...args);
+  if (!String(file || '').endsWith('server-v2.js')) return result;
+  const isBuffer = Buffer.isBuffer(result);
+  let source = isBuffer ? result.toString('utf8') : String(result);
+  if (source.includes("/api/admin/appointments/:appointmentId/propose")) return result;
+
+  const runtime = String.raw`
 function proposalBody(data){return JSON.stringify({kind:'reschedule_proposal',...data});}
 function parseProposalBody(value){try{const data=JSON.parse(String(value||''));return data&&data.kind==='reschedule_proposal'?data:null}catch(_){return null}}
-async function activeProposalRows(supabase){const {data,error}=await supabase.from('customer_notifications').select('id,appointment_id,customer_id,body,created_at,type').in('type',['reschedule_proposal','reschedule_accepted','reschedule_rejected']).order('created_at',{ascending:false}).limit(500);if(error)throw error;const latest=new Map();for(const row of data||[]){const key=String(row.appointment_id||'');if(!key||latest.has(key))continue;const parsed=parseProposalBody(row.body);if(parsed)latest.set(key,{...row,proposal:parsed})}return [...latest.values()].filter(x=>x.type==='reschedule_proposal'&&x.proposal.status==='pending')}
-function proposalRange(p){const start=DateTime.fromISO(String(p.date||'')+'T'+String(p.time||''),{zone:TZ});if(!start.isValid)return null;return{start,end:start.plus({minutes:Number(p.minutes||60)+BUFFER_MINUTES})}}
-async function proposalSlotIsFree(supabase,appointment,start,blockedEnd){const startIso=start.toUTC().toISO(),endIso=blockedEnd.toUTC().toISO();const {data:conflicts,error}=await supabase.from('appointments').select('id').neq('id',appointment.id).in('status',['pending','confirmed']).lt('starts_at',endIso).gt('ends_at',startIso).limit(1);if(error)throw error;if(conflicts&&conflicts.length)return false;const proposals=await activeProposalRows(supabase);return !proposals.some(row=>{if(String(row.appointment_id)===String(appointment.id))return false;const range=proposalRange(row.proposal);return range&&start.toMillis()<range.end.toMillis()&&blockedEnd.toMillis()>range.start.toMillis()})}
-async function proposalStillReservable(supabase,appointment,start,blockedEnd){return proposalSlotIsFree(supabase,appointment,start,blockedEnd)}
-app.get('/api/admin/calendar-items',async(_req,res)=>{try{const supabase=supabaseClient();const {data:appointments,error}=await supabase.from('appointments').select('*,customer:customers(id,first_name,last_name,phone)').in('status',['pending','confirmed']).order('starts_at',{ascending:true});if(error)throw error;const active=await activeProposalRows(supabase),activeByAppointment=new Map(active.map(x=>[String(x.appointment_id),x])),items=[];for(const a of appointments||[]){const p=activeByAppointment.get(String(a.id)),customer=a.customer||{},name=[customer.first_name,customer.last_name].filter(Boolean).join(' ')||'לקוחה';if(p){const pr=p.proposal,range=proposalRange(pr);if(!range)continue;items.push({id:'proposal-'+p.id,appointmentId:a.id,name,phone:customer.phone||'',service:pr.service||a.service_name,date:range.start.setZone(TZ).toISODate(),start:range.start.setZone(TZ).toFormat('HH:mm'),end:range.start.plus({minutes:Number(pr.minutes||a.treatment_minutes||60)}).setZone(TZ).toFormat('HH:mm'),status:'pending_customer'});continue}const start=DateTime.fromISO(a.starts_at,{setZone:true}).setZone(TZ),end=DateTime.fromISO(a.ends_at,{setZone:true}).setZone(TZ);items.push({id:a.id,appointmentId:a.id,name,phone:customer.phone||'',service:a.service_name||'טיפול',date:start.toISODate(),start:start.toFormat('HH:mm'),end:end.toFormat('HH:mm'),status:a.status==='confirmed'?'approved':'pending_admin'})}res.set('Cache-Control','no-store');res.json({items})}catch(error){console.error('Admin calendar items failed',error);res.status(500).json({error:'ADMIN_CALENDAR_ITEMS_FAILED'})}});
-app.post('/api/admin/appointments/:appointmentId/propose',async(req,res)=>{try{const date=String(req.body.date||''),time=String(req.body.time||''),message=String(req.body.message||'').trim();if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))return res.status(400).json({error:'INVALID_PROPOSAL'});const supabase=supabaseClient();const {data:appointment,error}=await supabase.from('appointments').select('*').eq('id',req.params.appointmentId).single();if(error||!appointment)return res.status(404).json({error:'APPOINTMENT_NOT_FOUND'});const customer=await getCustomer(supabase,appointment.customer_id);if(!customer)return res.status(404).json({error:'CUSTOMER_NOT_FOUND'});const start=DateTime.fromISO(date+'T'+time,{zone:TZ});if(!start.isValid||start<=DateTime.now().setZone(TZ))return res.status(400).json({error:'INVALID_PROPOSAL_TIME'});const minutes=Number(appointment.treatment_minutes||60),blockedEnd=start.plus({minutes:minutes+BUFFER_MINUTES}),hours=getAppointmentStartWindow(start);if(start.hour<hours.firstHour||start.hour>hours.lastHour)return res.status(409).json({error:'OUTSIDE_WORK_HOURS'});if(!(await proposalSlotIsFree(supabase,appointment,start,blockedEnd)))return res.status(409).json({error:'SLOT_TAKEN'});const end=start.plus({minutes}),data={appointmentId:appointment.id,date,time,endTime:end.toFormat('HH:mm'),service:appointment.service_name,price:Number(appointment.total_price||0),minutes,message,status:'pending'},body=proposalBody(data);const {data:older}=await supabase.from('customer_notifications').select('id,body').eq('appointment_id',appointment.id).eq('type','reschedule_proposal');for(const old of older||[]){const parsed=parseProposalBody(old.body);if(parsed&&parsed.status==='pending'){parsed.status='superseded';await supabase.from('customer_notifications').update({type:'reschedule_rejected',body:proposalBody(parsed)}).eq('id',old.id)}}const {data:notification,error:noticeError}=await supabase.from('customer_notifications').insert({customer_id:appointment.customer_id,appointment_id:appointment.id,type:'reschedule_proposal',title:'עמית הציעה לך מועד אחר',body}).select().single();if(noticeError)throw noticeError;try{await supabase.from('admin_notifications').insert({type:'reschedule_proposal_sent',title:'ממתינה לתגובת הלקוחה',body:customer.first_name+' '+customer.last_name+' · '+date+' · '+time,customer_id:appointment.customer_id,appointment_id:appointment.id,is_read:false,metadata:{...data,status:'pending_customer_response'}})}catch(e){console.error('Proposal admin notification failed',e)}res.status(201).json({ok:true,notification,proposal:data})}catch(error){console.error('Proposal failed',error);res.status(500).json({error:'PROPOSAL_FAILED'})}});
-app.post('/api/customer-notifications/:notificationId/respond',async(req,res)=>{try{const decision=String(req.body.decision||'');if(!['accept','reject'].includes(decision))return res.status(400).json({error:'INVALID_DECISION'});const sessionId=amitDecodeSession(amitCookie(req,AMIT_SESSION_COOKIE));if(!sessionId)return res.status(401).json({error:'UNAUTHENTICATED'});const supabase=supabaseClient();const {data:notification,error}=await supabase.from('customer_notifications').select('*').eq('id',req.params.notificationId).single();if(error||!notification)return res.status(404).json({error:'NOTIFICATION_NOT_FOUND'});if(String(notification.customer_id)!==String(sessionId))return res.status(403).json({error:'FORBIDDEN'});const proposal=parseProposalBody(notification.body);if(!proposal)return res.status(409).json({error:'NOT_A_PROPOSAL'});if(proposal.status!=='pending')return res.json({ok:true,status:proposal.status});const {data:appointment,error:apptError}=await supabase.from('appointments').select('*').eq('id',notification.appointment_id).single();if(apptError||!appointment)return res.status(404).json({error:'APPOINTMENT_NOT_FOUND'});if(decision==='reject'){proposal.status='rejected';await supabase.from('customer_notifications').update({type:'reschedule_rejected',body:proposalBody(proposal),updated_at:new Date().toISOString()}).eq('id',notification.id);try{await supabase.from('admin_notifications').insert({type:'reschedule_rejected',title:'הלקוחה דחתה את ההצעה',body:proposal.date+' · '+proposal.time,customer_id:notification.customer_id,appointment_id:appointment.id,is_read:false,metadata:{...proposal,status:'rejected_customer_response'}})}catch(e){console.error(e)}return res.json({ok:true,status:'rejected'})}const start=DateTime.fromISO(proposal.date+'T'+proposal.time,{zone:TZ}),blockedEnd=start.plus({minutes:Number(appointment.treatment_minutes||proposal.minutes||60)+BUFFER_MINUTES});if(!(await proposalStillReservable(supabase,appointment,start,blockedEnd)))return res.status(409).json({error:'SLOT_TAKEN'});proposal.status='accepted';const {data:updated,error:updateError}=await supabase.from('appointments').update({starts_at:start.toUTC().toISO(),ends_at:blockedEnd.toUTC().toISO(),status:'confirmed'}).eq('id',appointment.id).select().single();if(updateError)throw updateError;await supabase.from('customer_notifications').update({type:'reschedule_accepted',body:proposalBody(proposal),updated_at:new Date().toISOString()}).eq('id',notification.id);try{await supabase.from('admin_notifications').insert({type:'reschedule_accepted',title:'הלקוחה אישרה את הזמן החדש',body:proposal.date+' · '+proposal.time,customer_id:notification.customer_id,appointment_id:appointment.id,is_read:false,metadata:{...proposal,status:'accepted_customer_response'}})}catch(e){console.error(e)}const customer=await getCustomer(supabase,appointment.customer_id);setImmediate(async()=>{try{await syncApprovedAppointmentToIcloud(updated,customer)}catch(e){console.error('Proposal iCloud sync failed',e)}});res.json({ok:true,status:'accepted',appointment:updated})}catch(error){console.error('Proposal response failed',error);res.status(500).json({error:'PROPOSAL_RESPONSE_FAILED'})}});
+
+async function proposalHasConflict(supabase, appointmentId, start, blockedEnd){
+  const {data:conflicts,error}=await supabase.from('appointments').select('id').neq('id',appointmentId).in('status',['pending','confirmed']).lt('starts_at',blockedEnd.toUTC().toISO()).gt('ends_at',start.toUTC().toISO()).limit(1);
+  if(error) throw error;
+  if(conflicts&&conflicts.length) return true;
+  const {data:rows,error:proposalError}=await supabase.from('customer_notifications').select('appointment_id,body').eq('type','reschedule_proposal').neq('appointment_id',appointmentId).limit(100);
+  if(proposalError) throw proposalError;
+  for(const row of rows||[]){
+    const p=parseProposalBody(row.body); if(!p||p.status!=='pending') continue;
+    const ps=DateTime.fromISO(String(p.date||'')+'T'+String(p.time||''),{zone:TZ}); if(!ps.isValid) continue;
+    const pe=ps.plus({minutes:Number(p.minutes||60)+BUFFER_MINUTES});
+    if(start.toMillis()<pe.toMillis()&&blockedEnd.toMillis()>ps.toMillis()) return true;
+  }
+  return false;
+}
+
+app.post('/api/admin/appointments/:appointmentId/propose',async(req,res)=>{
+  try{
+    const date=String(req.body?.date||''),time=String(req.body?.time||''),message=String(req.body?.message||'').trim();
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time)) return res.status(400).json({error:'INVALID_PROPOSAL'});
+    const supabase=supabaseClient();
+    const {data:appointment,error}=await supabase.from('appointments').select('*').eq('id',req.params.appointmentId).single();
+    if(error||!appointment) return res.status(404).json({error:'APPOINTMENT_NOT_FOUND'});
+    const customer=await getCustomer(supabase,appointment.customer_id);
+    if(!customer) return res.status(404).json({error:'CUSTOMER_NOT_FOUND'});
+    const start=DateTime.fromISO(date+'T'+time,{zone:TZ});
+    if(!start.isValid||start<=DateTime.now().setZone(TZ)) return res.status(400).json({error:'INVALID_PROPOSAL_TIME'});
+    const minutes=Number(appointment.treatment_minutes||60),blockedEnd=start.plus({minutes:minutes+BUFFER_MINUTES});
+    if(await proposalHasConflict(supabase,appointment.id,start,blockedEnd)) return res.status(409).json({error:'SLOT_TAKEN'});
+
+    await supabase.from('customer_notifications').delete().eq('appointment_id',appointment.id).eq('type','reschedule_proposal');
+    const data={appointmentId:appointment.id,date,time,endTime:start.plus({minutes}).toFormat('HH:mm'),service:appointment.service_name,price:Number(appointment.total_price||0),minutes,message,status:'pending'};
+    const {data:notification,error:noticeError}=await supabase.from('customer_notifications').insert({customer_id:appointment.customer_id,appointment_id:appointment.id,type:'reschedule_proposal',title:'עמית הציעה לך מועד אחר',body:proposalBody(data)}).select().single();
+    if(noticeError) throw noticeError;
+
+    res.status(201).json({ok:true,notification,proposal:data});
+    setImmediate(()=>supabase.from('admin_notifications').insert({type:'reschedule_proposal_sent',title:'ממתינה לתגובת הלקוחה',body:customer.first_name+' '+customer.last_name+' · '+date+' · '+time,customer_id:appointment.customer_id,appointment_id:appointment.id,is_read:false,metadata:{...data,status:'pending_customer_response'}}).then(({error})=>{if(error)console.error('Proposal admin notification failed',error)}).catch(e=>console.error('Proposal admin notification failed',e)));
+  }catch(error){console.error('Proposal failed',error);if(!res.headersSent)res.status(500).json({error:'PROPOSAL_FAILED'})}
+});
+
+app.post('/api/customer-notifications/:notificationId/respond',async(req,res)=>{
+  try{
+    const decision=String(req.body?.decision||''), suppliedCustomerId=String(req.body?.customerId||'');
+    if(!['accept','reject'].includes(decision)) return res.status(400).json({error:'INVALID_DECISION'});
+    const supabase=supabaseClient();
+    const {data:notification,error}=await supabase.from('customer_notifications').select('*').eq('id',req.params.notificationId).single();
+    if(error||!notification) return res.status(404).json({error:'NOTIFICATION_NOT_FOUND'});
+    let sessionId=amitDecodeSession(amitCookie(req,AMIT_SESSION_COOKIE));
+    if(!sessionId&&suppliedCustomerId&&String(notification.customer_id)===suppliedCustomerId) sessionId=suppliedCustomerId;
+    if(!sessionId) return res.status(401).json({error:'UNAUTHENTICATED'});
+    if(String(notification.customer_id)!==String(sessionId)) return res.status(403).json({error:'FORBIDDEN'});
+    const proposal=parseProposalBody(notification.body);
+    if(!proposal) return res.status(409).json({error:'NOT_A_PROPOSAL'});
+    if(proposal.status!=='pending') return res.json({ok:true,status:proposal.status});
+
+    if(decision==='reject'){
+      proposal.status='rejected';
+      const {error:updateError}=await supabase.from('customer_notifications').update({type:'reschedule_rejected',body:proposalBody(proposal),updated_at:new Date().toISOString()}).eq('id',notification.id);
+      if(updateError) throw updateError;
+      res.json({ok:true,status:'rejected'});
+      setImmediate(()=>supabase.from('admin_notifications').insert({type:'reschedule_rejected',title:'הלקוחה דחתה את ההצעה',body:proposal.date+' · '+proposal.time,customer_id:notification.customer_id,appointment_id:notification.appointment_id,is_read:false,metadata:{...proposal,status:'rejected_customer_response'}}).catch(e=>console.error('Reject admin notice failed',e)));
+      return;
+    }
+
+    const {data:appointment,error:apptError}=await supabase.from('appointments').select('*').eq('id',notification.appointment_id).single();
+    if(apptError||!appointment) return res.status(404).json({error:'APPOINTMENT_NOT_FOUND'});
+    const start=DateTime.fromISO(String(proposal.date||'')+'T'+String(proposal.time||''),{zone:TZ});
+    const blockedEnd=start.plus({minutes:Number(appointment.treatment_minutes||proposal.minutes||60)+BUFFER_MINUTES});
+    if(await proposalHasConflict(supabase,appointment.id,start,blockedEnd)) return res.status(409).json({error:'SLOT_TAKEN'});
+
+    proposal.status='accepted';
+    const {data:updated,error:updateError}=await supabase.from('appointments').update({starts_at:start.toUTC().toISO(),ends_at:blockedEnd.toUTC().toISO(),status:'confirmed'}).eq('id',appointment.id).select().single();
+    if(updateError) throw updateError;
+    const {error:noticeUpdateError}=await supabase.from('customer_notifications').update({type:'reschedule_accepted',body:proposalBody(proposal),updated_at:new Date().toISOString()}).eq('id',notification.id);
+    if(noticeUpdateError) throw noticeUpdateError;
+
+    res.json({ok:true,status:'accepted',appointment:updated});
+    setImmediate(()=>supabase.from('admin_notifications').insert({type:'reschedule_accepted',title:'הלקוחה אישרה את הזמן החדש',body:proposal.date+' · '+proposal.time,customer_id:notification.customer_id,appointment_id:appointment.id,is_read:false,metadata:{...proposal,status:'accepted_customer_response'}}).then(({error})=>{if(error)console.error('Accepted admin notice failed',error)}).catch(e=>console.error('Accepted admin notice failed',e)));
+  }catch(error){console.error('Proposal response failed',error);if(!res.headersSent)res.status(500).json({error:'PROPOSAL_RESPONSE_FAILED'})}
+});
 `;
-  source=source.replace(/app\.listen\(/,runtime+'\napp.listen(');
-  return isBuffer?Buffer.from(source,'utf8'):source;
+
+  source = source.replace(/app\.listen\(/, runtime + '\napp.listen(');
+  return isBuffer ? Buffer.from(source,'utf8') : source;
 };
