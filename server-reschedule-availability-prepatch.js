@@ -19,8 +19,6 @@ app.get('/api/admin/appointments/:appointmentId/availability',async(req,res)=>{
     const {data:rows,error:rowsError}=await supabase.from('appointments').select('id,starts_at,ends_at,status').neq('id',appointment.id).in('status',['pending','confirmed']).lt('starts_at',dayEnd.toUTC().toISO()).gt('ends_at',dayStart.toUTC().toISO());
     if(rowsError)throw rowsError;
     const proposals=await activeProposalRows(supabase);
-    const calendar=calendarClient();
-    const {busy}=await getBusyPeriods(calendar,dayStart.toUTC().toISO(),dayEnd.toUTC().toISO());
     const hours=getAppointmentStartWindow(dayStart);
     const now=DateTime.now().setZone(TZ);
     const slots=[];
@@ -34,9 +32,9 @@ app.get('/api/admin/appointments/:appointmentId/availability',async(req,res)=>{
       if(dbClash)continue;
       const proposalClash=(proposals||[]).some(row=>{if(String(row.appointment_id)===String(appointment.id))return false;const range=proposalRange(row.proposal);return range&&startMs<range.end.toMillis()&&endMs>range.start.toMillis()});
       if(proposalClash)continue;
-      if((busy||[]).some(item=>conflictsWithBusy(start,blockedEnd,item)))continue;
       slots.push(hh+':'+mm);
     }
+    res.set('Cache-Control','no-store');
     res.json({slots,appointmentId:appointment.id,date,minutes});
   }catch(error){console.error('Reschedule availability failed',error);res.status(500).json({error:'RESCHEDULE_AVAILABILITY_FAILED'})}
 });
