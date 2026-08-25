@@ -6,4 +6,5 @@ function openNow(ev){const btn=isDetailsButton(ev.target);if(!btn)return;ev.prev
 ['pointerdown','touchstart','click'].forEach(type=>document.addEventListener(type,openNow,true));
 function hardBind(){document.querySelectorAll('#adminBody button').forEach(btn=>{if(btn.textContent.replace(/\s+/g,' ').trim()!=='פרטי תור')return;btn.type='button';btn.dataset.go='appointment-details';btn.style.pointerEvents='auto';btn.style.position='relative';btn.style.zIndex='20';btn.onclick=function(ev){openNow(ev);return false};});}
 new MutationObserver(hardBind).observe(document.body,{childList:true,subtree:true});window.addEventListener('pageshow',hardBind);window.addEventListener('amit:session-ready',hardBind);setInterval(hardBind,500);hardBind();
+if(!document.querySelector('script[data-aad-actions]')){const s=document.createElement('script');s.src='/admin-appointment-details-actions.js?v=20260825-v1';s.dataset.aadActions='1';s.async=false;document.body.appendChild(s)}
 })();
