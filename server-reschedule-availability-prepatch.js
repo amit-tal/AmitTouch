@@ -18,7 +18,10 @@ app.get('/api/admin/appointments/:appointmentId/availability',async(req,res)=>{
     const dayEnd=dayStart.plus({days:1});
     const {data:rows,error:rowsError}=await supabase.from('appointments').select('id,starts_at,ends_at,status').neq('id',appointment.id).in('status',['pending','confirmed']).lt('starts_at',dayEnd.toUTC().toISO()).gt('ends_at',dayStart.toUTC().toISO());
     if(rowsError)throw rowsError;
-    const proposals=await activeProposalRows(supabase);
+    const {data:proposalRows,error:proposalRowsError}=await supabase.from('customer_notifications').select('appointment_id,body').eq('type','reschedule_proposal').neq('appointment_id',appointment.id).limit(200);
+    if(proposalRowsError)throw proposalRowsError;
+    const proposals=[];
+    for(const row of proposalRows||[]){try{const p=JSON.parse(String(row.body||''));if(p?.kind==='reschedule_proposal'&&p.status==='pending')proposals.push({appointment_id:row.appointment_id,proposal:p})}catch(_){}}
     const hours=getAppointmentStartWindow(dayStart);
     const now=DateTime.now().setZone(TZ);
     const slots=[];
@@ -30,7 +33,7 @@ app.get('/api/admin/appointments/:appointmentId/availability',async(req,res)=>{
       const startMs=start.toMillis(),endMs=blockedEnd.toMillis();
       const dbClash=(rows||[]).some(a=>{const s=DateTime.fromISO(a.starts_at,{setZone:true}).toMillis(),e=DateTime.fromISO(a.ends_at,{setZone:true}).toMillis();return s<endMs&&e>startMs});
       if(dbClash)continue;
-      const proposalClash=(proposals||[]).some(row=>{if(String(row.appointment_id)===String(appointment.id))return false;const range=proposalRange(row.proposal);return range&&startMs<range.end.toMillis()&&endMs>range.start.toMillis()});
+      const proposalClash=proposals.some(row=>{const p=row.proposal,ps=DateTime.fromISO(String(p.date||'')+'T'+String(p.time||''),{zone:TZ});if(!ps.isValid)return false;const pe=ps.plus({minutes:Number(p.minutes||60)+BUFFER_MINUTES});return startMs<pe.toMillis()&&endMs>ps.toMillis()});
       if(proposalClash)continue;
       slots.push(hh+':'+mm);
     }
