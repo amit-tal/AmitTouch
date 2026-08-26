@@ -4,8 +4,9 @@ fs.readFileSync=function adminMessagePatchedReadFileSync(file,...args){
   const result=originalReadFileSync(file,...args);
   if(!String(file||'').endsWith('server-v2.js'))return result;
   const isBuffer=Buffer.isBuffer(result);let source=isBuffer?result.toString('utf8'):String(result);
-  if(source.includes("/api/admin/messages/:customerId"))return result;
+  if(source.includes('MESSAGE_CHAT_PATCH_V2'))return result;
   const runtime=String.raw`
+/* MESSAGE_CHAT_PATCH_V2 */
 app.get('/api/admin/messages',async(req,res)=>{
   try{
     const supabase=supabaseClient();
@@ -38,6 +39,16 @@ app.get('/api/admin/messages/:customerId',async(req,res)=>{
     if(error)throw error;
     res.json({ok:true,customer:{id:customer.id,firstName:customer.first_name,lastName:customer.last_name,phone:customer.phone||''},messages:(data||[]).map(n=>({id:n.id,body:n.body||'',title:n.title||'',type:n.type||'',createdAt:n.created_at||null,appointmentId:n.appointment_id||null,direction:n.type==='admin_message'?'out':'in'}))});
   }catch(error){console.error('Admin message history failed',error);if(!res.headersSent)res.status(500).json({error:'MESSAGE_HISTORY_FAILED'})}
+});
+app.delete('/api/admin/messages/:customerId',async(req,res)=>{
+  try{
+    const customerId=String(req.params.customerId||'').trim();
+    if(!customerId)return res.status(400).json({error:'CUSTOMER_REQUIRED'});
+    const supabase=supabaseClient();
+    const {error}=await supabase.from('customer_notifications').delete().eq('customer_id',customerId);
+    if(error)throw error;
+    res.json({ok:true});
+  }catch(error){console.error('Admin chat delete failed',error);if(!res.headersSent)res.status(500).json({error:'MESSAGE_DELETE_FAILED'})}
 });
 app.post('/api/admin/messages',async(req,res)=>{
   try{
