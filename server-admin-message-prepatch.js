@@ -6,6 +6,27 @@ fs.readFileSync=function adminMessagePatchedReadFileSync(file,...args){
   const isBuffer=Buffer.isBuffer(result);let source=isBuffer?result.toString('utf8'):String(result);
   if(source.includes("/api/admin/messages/:customerId"))return result;
   const runtime=String.raw`
+app.get('/api/admin/messages',async(req,res)=>{
+  try{
+    const supabase=supabaseClient();
+    const {data,error}=await supabase.from('customer_notifications').select('*').order('created_at',{ascending:false}).limit(1000);
+    if(error)throw error;
+    const grouped=new Map();
+    for(const n of data||[]){
+      const customerId=String(n.customer_id||'');
+      if(!customerId)continue;
+      if(!grouped.has(customerId))grouped.set(customerId,{customerId,messages:[],lastAt:n.created_at||null,lastBody:n.body||''});
+      grouped.get(customerId).messages.push({id:n.id,body:n.body||'',title:n.title||'',type:n.type||'',createdAt:n.created_at||null,direction:n.type==='admin_message'?'out':'in'});
+    }
+    const conversations=[];
+    for(const item of grouped.values()){
+      const customer=await getCustomer(supabase,item.customerId).catch(()=>null);
+      conversations.push({customerId:item.customerId,name:customer?[customer.first_name,customer.last_name].filter(Boolean).join(' '):'לקוחה',phone:customer?.phone||'',lastAt:item.lastAt,lastBody:item.lastBody,messages:item.messages});
+    }
+    conversations.sort((a,b)=>new Date(b.lastAt||0)-new Date(a.lastAt||0));
+    res.json({ok:true,conversations});
+  }catch(error){console.error('Admin conversations failed',error);if(!res.headersSent)res.status(500).json({error:'MESSAGE_CONVERSATIONS_FAILED'})}
+});
 app.get('/api/admin/messages/:customerId',async(req,res)=>{
   try{
     const customerId=String(req.params.customerId||'').trim();
