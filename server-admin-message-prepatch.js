@@ -4,8 +4,20 @@ fs.readFileSync=function adminMessagePatchedReadFileSync(file,...args){
   const result=originalReadFileSync(file,...args);
   if(!String(file||'').endsWith('server-v2.js'))return result;
   const isBuffer=Buffer.isBuffer(result);let source=isBuffer?result.toString('utf8'):String(result);
-  if(source.includes("/api/admin/messages"))return result;
+  if(source.includes("/api/admin/messages/:customerId"))return result;
   const runtime=String.raw`
+app.get('/api/admin/messages/:customerId',async(req,res)=>{
+  try{
+    const customerId=String(req.params.customerId||'').trim();
+    if(!customerId)return res.status(400).json({error:'CUSTOMER_REQUIRED'});
+    const supabase=supabaseClient();
+    const customer=await getCustomer(supabase,customerId);
+    if(!customer)return res.status(404).json({error:'CUSTOMER_NOT_FOUND'});
+    const {data,error}=await supabase.from('customer_notifications').select('*').eq('customer_id',customerId).order('created_at',{ascending:true}).limit(300);
+    if(error)throw error;
+    res.json({ok:true,customer:{id:customer.id,firstName:customer.first_name,lastName:customer.last_name,phone:customer.phone||''},messages:(data||[]).map(n=>({id:n.id,body:n.body||'',title:n.title||'',type:n.type||'',createdAt:n.created_at||null,appointmentId:n.appointment_id||null,direction:n.type==='admin_message'?'out':'in'}))});
+  }catch(error){console.error('Admin message history failed',error);if(!res.headersSent)res.status(500).json({error:'MESSAGE_HISTORY_FAILED'})}
+});
 app.post('/api/admin/messages',async(req,res)=>{
   try{
     const body=String(req.body?.body||'').trim();
