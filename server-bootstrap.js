@@ -5,4 +5,4 @@ import './server-reschedule-availability-prepatch.js';
 import './server-booking-availability-prepatch.js';
 import './server-admin-message-prepatch.js';
 import './server-admin-customers-prepatch.js';
-await import('./server.js');
+await import('./server-safe-loader.js');
