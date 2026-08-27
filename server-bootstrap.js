@@ -1,6 +1,7 @@
 import './preload.js';
 import './server-studio-pages-prepatch.js';
 import './server-settings-runtime-prepatch.js';
+import './server-settings-buffer-fix-prepatch.js';
 import './server-proposal-prepatch.js';
 import './server-reschedule-availability-prepatch.js';
 import './server-booking-availability-prepatch.js';
