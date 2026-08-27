@@ -5,7 +5,10 @@ fs.readFileSync=function amitSettingsRefinementRead(path,...args){
   if(!String(path||'').endsWith('index.html'))return result;
   const isBuffer=Buffer.isBuffer(result);
   let html=isBuffer?result.toString('utf8'):String(result);
-  const tag='<script src="/admin-settings-refinements.js?v=20260827-refinements-v1"></script><script src="/customer-studio-settings-bridge.js?v=20260827-refinements-v1"></script>';
+  const cacheReset='<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><script>(function(){try{if(\'caches\' in window)caches.keys().then(function(keys){return Promise.all(keys.map(function(k){return caches.delete(k)}))});if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage(\'CLEAR_AMIT_TOUCH_CACHES\')}catch(_){}})();</script>';
+  if(!html.includes('AMIT_CACHE_RESET_20260827'))html=html.replace('</head>','<!-- AMIT_CACHE_RESET_20260827 -->'+cacheReset+'</head>');
+  const tag='<script src="/admin-settings-refinements.js?v=20260827-refinements-v3"></script><script src="/customer-studio-settings-bridge.js?v=20260827-refinements-v3"></script>';
   if(!html.includes('admin-settings-refinements.js'))html=html.replace('</body>',tag+'</body>');
+  else html=html.replace(/<script src="\/admin-settings-refinements\.js\?v=[^"]+"><\/script><script src="\/customer-studio-settings-bridge\.js\?v=[^"]+"><\/script>/,tag);
   return isBuffer?Buffer.from(html,'utf8'):html;
 };
