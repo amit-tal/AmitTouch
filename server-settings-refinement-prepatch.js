@@ -6,11 +6,11 @@ fs.readFileSync=function amitSettingsRefinementRead(path,...args){
   const isBuffer=Buffer.isBuffer(result);
   let html=isBuffer?result.toString('utf8'):String(result);
   const cacheReset='<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><script>(function(){try{if(\'caches\' in window)caches.keys().then(function(keys){return Promise.all(keys.map(function(k){return caches.delete(k)}))});if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.controller.postMessage(\'CLEAR_AMIT_TOUCH_CACHES\')}catch(_){}})();</script>';
-  if(!html.includes('AMIT_CACHE_RESET_20260827_V5'))html=html.replace('</head>','<!-- AMIT_CACHE_RESET_20260827_V5 -->'+cacheReset+'</head>');
-  const refinements='<script src="/admin-settings-refinements.js?v=20260827-refinements-v5"></script><script src="/customer-studio-settings-bridge.js?v=20260827-refinements-v5"></script><script src="/admin-studio-settings-canonical.js?v=20260827-studio-canonical-v1"></script>';
-  const liveSettings='<script src="/admin-simple-settings.js?v=20260827-simple-settings-live-v5-force"></script><script src="/admin-settings-route-fix.js?v=20260827-settings-route-v6-force"></script>';
+  if(!html.includes('AMIT_CACHE_RESET_20260827_V6'))html=html.replace('</head>','<!-- AMIT_CACHE_RESET_20260827_V6 -->'+cacheReset+'</head>');
+  const refinements='<script src="/admin-settings-refinements.js?v=20260827-refinements-v6"></script><script src="/customer-studio-settings-bridge.js?v=20260827-refinements-v6"></script><script src="/admin-studio-settings-canonical.js?v=20260827-studio-canonical-v2"></script><script src="/admin-settings-final-ui-fix.js?v=20260827-settings-final-ui-v1"></script>';
+  const liveSettings='<script src="/admin-simple-settings.js?v=20260827-simple-settings-live-v6-force"></script><script src="/admin-settings-route-fix.js?v=20260827-settings-route-v7-force"></script>';
   if(!html.includes('admin-settings-refinements.js'))html=html.replace('</body>',refinements+'</body>');
-  else html=html.replace(/<script src="\/admin-settings-refinements\.js\?v=[^"]+"><\/script><script src="\/customer-studio-settings-bridge\.js\?v=[^"]+"><\/script>(?:<script src="\/admin-studio-settings-canonical\.js\?v=[^"]+"><\/script>)?/,refinements);
-  if(!html.includes('simple-settings-live-v5-force'))html=html.replace('</body>',liveSettings+'</body>');
+  else html=html.replace(/<script src="\/admin-settings-refinements\.js\?v=[^"]+"><\/script><script src="\/customer-studio-settings-bridge\.js\?v=[^"]+"><\/script>(?:<script src="\/admin-studio-settings-canonical\.js\?v=[^"]+"><\/script>)?(?:<script src="\/admin-settings-final-ui-fix\.js\?v=[^"]+"><\/script>)?/,refinements);
+  if(!html.includes('simple-settings-live-v6-force'))html=html.replace('</body>',liveSettings+'</body>');
   return isBuffer?Buffer.from(html,'utf8'):html;
 };
