@@ -1,5 +1,6 @@
 import './preload.js';
 import './server-studio-pages-prepatch.js';
+import './server-settings-refinement-prepatch.js';
 import './server-settings-runtime-prepatch.js';
 import './server-settings-buffer-fix-prepatch.js';
 import './server-proposal-prepatch.js';
