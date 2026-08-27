@@ -1,8 +1,9 @@
 import './preload.js';
-import './server-settings-prepatch.js';
+import './server-studio-pages-prepatch.js';
 import './server-proposal-prepatch.js';
 import './server-reschedule-availability-prepatch.js';
 import './server-booking-availability-prepatch.js';
 import './server-admin-message-prepatch.js';
 import './server-admin-customers-prepatch.js';
+import './server-simple-settings-prepatch.js';
 await import('./server.js');
