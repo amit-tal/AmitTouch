@@ -6,10 +6,10 @@ fs.readFileSync = function amitSettingsRuntimeRead(path, ...args) {
   const isBuffer = Buffer.isBuffer(result);
   let code = isBuffer ? result.toString('utf8') : String(result);
   const marker = "fs.writeFileSync(runtimePath, source, 'utf8');";
-  if (!code.includes(marker) || code.includes('AMIT_SETTINGS_RUNTIME_PATCH_V1')) return result;
+  if (!code.includes(marker) || code.includes('AMIT_SETTINGS_RUNTIME_PATCH_V2')) return result;
 
   const patch = String.raw`
-// AMIT_SETTINGS_RUNTIME_PATCH_V1
+// AMIT_SETTINGS_RUNTIME_PATCH_V2
 const settingsRuntime = String.raw\`
 const AMIT_DEFAULT_SETTINGS = {
   gap_minutes: 30,
@@ -28,19 +28,19 @@ const AMIT_DEFAULT_SETTINGS = {
   admin_pin: '2303'
 };
 async function amitGetSettings(supabase) {
-  try {
-    const { data, error } = await supabase.from('app_settings').select('*').eq('id', 1).maybeSingle();
-    if (error) throw error;
-    return { ...AMIT_DEFAULT_SETTINGS, ...(data || {}) };
-  } catch (error) {
-    console.error('Settings load failed', error);
-    return { ...AMIT_DEFAULT_SETTINGS };
-  }
+  try { const { data, error } = await supabase.from('app_settings').select('*').eq('id', 1).maybeSingle(); if (error) throw error; return { ...AMIT_DEFAULT_SETTINGS, ...(data || {}) }; }
+  catch (error) { console.error('Settings load failed', error); return { ...AMIT_DEFAULT_SETTINGS }; }
 }
 function amitMessage(template, customer, appointment) {
   const start = appointment?.starts_at ? DateTime.fromISO(appointment.starts_at, { setZone: true }).setZone(TZ) : null;
   const name = customer?.first_name || customer?.firstName || 'לקוחה';
-  return String(template || '').replaceAll('{שם}', name).replaceAll('{תאריך}', start?.isValid ? start.toFormat('dd.MM.yy') : '').replaceAll('{שעה}', start?.isValid ? start.toFormat('HH:mm') : '');
+  const service = appointment?.service_name || appointment?.service || 'הטיפול';
+  return String(template || '').replaceAll('{שם}', name).replaceAll('{תאריך}', start?.isValid ? start.toFormat('dd.MM.yy') : '').replaceAll('{שעה}', start?.isValid ? start.toFormat('HH:mm') : '').replaceAll('{טיפול}', service);
+}
+async function amitSendCustomerMessage(supabase, customerId, appointmentId, title, body, type='admin_message') {
+  const { data, error } = await supabase.from('customer_notifications').insert({ customer_id: customerId, appointment_id: appointmentId || null, type, title, body }).select().single();
+  if (error) throw error;
+  return data;
 }
 app.get('/api/admin/settings', async (_req, res) => {
   try { const supabase = supabaseClient(); const settings = await amitGetSettings(supabase); const { admin_pin, ...safe } = settings; res.set('Cache-Control', 'no-store'); res.json({ settings: safe }); }
@@ -75,6 +75,27 @@ app.get('/api/admin/customer-preview', async (_req, res) => {
     res.json({ ok: true, customer: customerPayload(customer) });
   } catch (error) { console.error(error); res.status(500).json({ error: 'PREVIEW_CUSTOMER_FAILED' }); }
 });
+app.post('/api/admin/appointments/:appointmentId/complete', async (req, res) => {
+  try {
+    const supabase = supabaseClient();
+    const { data: appointment, error } = await supabase.from('appointments').select('*').eq('id', req.params.appointmentId).single(); if (error || !appointment) return res.status(404).json({ error: 'APPOINTMENT_NOT_FOUND' });
+    const customer = await getCustomer(supabase, appointment.customer_id); const settings = await amitGetSettings(supabase);
+    try { await supabase.from('appointments').update({ status: 'completed' }).eq('id', appointment.id); } catch (_) {}
+    if (customer) await amitSendCustomerMessage(supabase, customer.id, appointment.id, 'תודה שביקרת 💚', amitMessage(settings.after_treatment_message, customer, appointment), 'admin_message');
+    res.json({ ok: true });
+  } catch (error) { console.error(error); res.status(500).json({ error: 'APPOINTMENT_COMPLETE_FAILED' }); }
+});
+app.post('/api/admin/receipts/deliver', async (req, res) => {
+  try {
+    const customerId = String(req.body?.customerId || '').trim(); const appointmentId = req.body?.appointmentId ? String(req.body.appointmentId) : null; const receiptUrl = String(req.body?.receiptUrl || '').trim();
+    if (!customerId) return res.status(400).json({ error: 'CUSTOMER_REQUIRED' });
+    const supabase = supabaseClient(); const settings = await amitGetSettings(supabase);
+    if (!settings.auto_receipt && !req.body?.force) return res.json({ ok: true, sent: false, requiresManualSend: true });
+    const body = receiptUrl ? 'הקבלה שלך מ־AMIT TOUCH מוכנה 💚\\n' + receiptUrl : 'הקבלה שלך מ־AMIT TOUCH מוכנה ונשלחה אלייך באפליקציה 💚';
+    const message = await amitSendCustomerMessage(supabase, customerId, appointmentId, 'הקבלה שלך', body, 'admin_message');
+    res.json({ ok: true, sent: true, message });
+  } catch (error) { console.error(error); res.status(500).json({ error: 'RECEIPT_DELIVERY_FAILED' }); }
+});
 \`;
 source = source.replace("app.get('/', (_req, res) => {", settingsRuntime + "\\napp.get('/', (_req, res) => {");
 source = source.replace("if (fullName === ADMIN_NAME && phone === ADMIN_PHONE) { if (!adminCode) return res.status(403).json({ error: 'ADMIN_CODE_REQUIRED', requiresAdminCode: true }); if (adminCode !== ADMIN_CODE) return res.status(401).json({ error: 'INVALID_ADMIN_CODE', requiresAdminCode: true }); return res.json({ ok: true, role: 'admin', customer: null }); }", "if (fullName === ADMIN_NAME && phone === ADMIN_PHONE) { if (!adminCode) return res.status(403).json({ error: 'ADMIN_CODE_REQUIRED', requiresAdminCode: true }); const adminSettings = await amitGetSettings(supabaseClient()); if (adminCode !== String(adminSettings.admin_pin || ADMIN_CODE)) return res.status(401).json({ error: 'INVALID_ADMIN_CODE', requiresAdminCode: true }); return res.json({ ok: true, role: 'admin', customer: null }); }");
@@ -85,8 +106,11 @@ source = source.replace("bufferMinutes: BUFFER_MINUTES, calendarEventBufferMinut
 source = source.replace("    const isAdminCreated = Boolean(booking.createdByAdmin); const status = isAdminCreated ? 'confirmed' : 'pending';", "    const isAdminCreated = Boolean(booking.createdByAdmin); const amitSettings = await amitGetSettings(supabase); const status = (isAdminCreated || amitSettings.auto_approve) ? 'confirmed' : 'pending';");
 source = source.replace("    const blockedEnd = start.plus({ minutes: Number(booking.minutes) + BUFFER_MINUTES });", "    if (!isAdminCreated) { const minStart = DateTime.now().setZone(TZ).plus({ hours: Number(amitSettings.min_advance_hours || 0) }); const maxStart = DateTime.now().setZone(TZ).startOf('day').plus({ days: Number(amitSettings.booking_window_days || 90) + 1 }); if (start < minStart) return res.status(409).json({ error: 'MIN_ADVANCE_TIME' }); if (start >= maxStart) return res.status(409).json({ error: 'BOOKING_WINDOW_EXCEEDED' }); } const blockedEnd = start.plus({ minutes: Number(booking.minutes) + Number(amitSettings.gap_minutes || 0) });");
 source = source.replace("buffer_minutes: BUFFER_MINUTES, starts_at", "buffer_minutes: Number(amitSettings.gap_minutes || 0), starts_at");
-source = source.replace("    if (!isAdminCreated) supabase.from('admin_notifications').insert({ type: 'appointment_updated', title: 'תור ממתין לאישור', body: \`\${customer.first_name} \${customer.last_name} ביקשה \${booking.service}\`, customer_id: customer.id, appointment_id: appointment.id, metadata: { starts_at: appointment.starts_at, status: 'pending' } }).then(({ error }) => { if (error) console.error('Admin notification failed', error); }).catch(error => console.error('Admin notification failed', error));", "    if (!isAdminCreated) { const notificationTitle = status === 'confirmed' ? 'תור חדש אושר אוטומטית' : 'תור ממתין לאישור'; supabase.from('admin_notifications').insert({ type: 'appointment_updated', title: notificationTitle, body: \`\${customer.first_name} \${customer.last_name} ביקשה \${booking.service}\`, customer_id: customer.id, appointment_id: appointment.id, metadata: { starts_at: appointment.starts_at, status, popup_enabled: !!amitSettings.notify_requests } }).then(({ error }) => { if (error) console.error('Admin notification failed', error); }).catch(error => console.error('Admin notification failed', error)); if (status === 'confirmed') supabase.from('customer_notifications').insert({ customer_id: customer.id, appointment_id: appointment.id, type: 'appointment_approved', title: 'התור אושר', body: amitMessage(amitSettings.confirmation_message, customer, appointment) }).then(({ error }) => { if (error) console.error('Auto approval customer message failed', error); }); }");
+source = source.replace("    if (!isAdminCreated) supabase.from('admin_notifications').insert({ type: 'appointment_updated', title: 'תור ממתין לאישור', body: \`\${customer.first_name} \${customer.last_name} ביקשה \${booking.service}\`, customer_id: customer.id, appointment_id: appointment.id, metadata: { starts_at: appointment.starts_at, status: 'pending' } }).then(({ error }) => { if (error) console.error('Admin notification failed', error); }).catch(error => console.error('Admin notification failed', error));", "    if (!isAdminCreated) { const notificationTitle = status === 'confirmed' ? 'תור חדש אושר אוטומטית' : 'תור ממתין לאישור'; supabase.from('admin_notifications').insert({ type: 'appointment_updated', title: notificationTitle, body: \`\${customer.first_name} \${customer.last_name} ביקשה \${booking.service}\`, customer_id: customer.id, appointment_id: appointment.id, metadata: { starts_at: appointment.starts_at, status, popup_enabled: !!amitSettings.notify_requests } }).then(({ error }) => { if (error) console.error('Admin notification failed', error); }).catch(error => console.error('Admin notification failed', error)); if (status === 'confirmed') supabase.from('customer_notifications').insert({ customer_id: customer.id, appointment_id: appointment.id, type: 'admin_message', title: 'התור אושר', body: amitMessage(amitSettings.confirmation_message, customer, appointment) }).then(({ error }) => { if (error) console.error('Auto approval customer message failed', error); }); }");
 source = source.replaceAll("Buffer: \${BUFFER_MINUTES} דקות", "Buffer: \${Number(amitSettings.gap_minutes || 0)} דקות");
+source = source.replace("body: 'התור שלך אושר ונקבע ביומן.'", "body: amitMessage((await amitGetSettings(supabase)).confirmation_message, customer, updated)");
+source = source.replace("const eventTitle = isAdminCreated ? \`AMIT TOUCH · \${customer.first_name} \${customer.last_name} · \${booking.service}\` : \`ממתין לאישור · AMIT TOUCH · \${customer.first_name} \${customer.last_name} · \${booking.service}\`;", "const eventTitle = status === 'confirmed' ? \`AMIT TOUCH · \${customer.first_name} \${customer.last_name} · \${booking.service}\` : \`ממתין לאישור · AMIT TOUCH · \${customer.first_name} \${customer.last_name} · \${booking.service}\`;");
+source = source.replace("if (updateError) throw updateError; res.json({ ok: true, appointment: updated }); } catch (error) { console.error(error); res.status(500).json({ error: 'CANCELLATION_FAILED' }); } });", "if (updateError) throw updateError; const cancelCustomer = await getCustomer(supabase, appointment.customer_id); const cancelSettings = await amitGetSettings(supabase); if (cancelCustomer) await amitSendCustomerMessage(supabase, cancelCustomer.id, appointment.id, 'התור בוטל', amitMessage(cancelSettings.cancellation_message, cancelCustomer, updated), 'admin_message'); await supabase.from('admin_notifications').insert({ type: 'appointment_cancelled', title: 'תור בוטל', body: cancelCustomer ? cancelCustomer.first_name + ' ביטלה תור' : 'תור בוטל', customer_id: appointment.customer_id, appointment_id: appointment.id, metadata: { popup_enabled: !!cancelSettings.notify_cancellations } }).catch(()=>{}); res.json({ ok: true, appointment: updated }); } catch (error) { console.error(error); res.status(500).json({ error: 'CANCELLATION_FAILED' }); } });");
 `;
   code = code.replace(marker, patch + '\n' + marker);
   return isBuffer ? Buffer.from(code, 'utf8') : code;
