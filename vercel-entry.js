@@ -6,6 +6,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const sourceUrl = new URL('./server-v2.js', import.meta.url);
 const projectRoot = path.dirname(fileURLToPath(sourceUrl));
+const loginRuntime = fs.readFileSync(new URL('./login-runtime-fix.js', import.meta.url), 'utf8');
+const fontRuntime = fs.readFileSync(new URL('./final-font-runtime.js', import.meta.url), 'utf8');
+const inlineRuntime = `<script>${loginRuntime}</script><script>${fontRuntime}</script>`;
+
 let source = fs.readFileSync(sourceUrl, 'utf8');
 const listenBlock = "const port = process.env.PORT || 3000;\napp.listen(port, () => console.log(`AMIT TOUCH running on ${port}`));";
 if (!source.includes(listenBlock)) {
@@ -17,9 +21,10 @@ source = source.replace("fs.readFileSync('./index.html', 'utf8')", `fs.readFileS
 source = source.replace("app.use(express.static('.'));", `app.use(express.static(${JSON.stringify(projectRoot)}));`);
 
 const adminMatch = "if (fullName === ADMIN_NAME && phone === ADMIN_PHONE)";
-if (source.includes(adminMatch)) {
-  source = source.replace(adminMatch, "if (phone === ADMIN_PHONE)");
+if (!source.includes(adminMatch)) {
+  throw new Error('VERCEL_ADMIN_LOGIN_PATCH_NOT_FOUND');
 }
+source = source.replace(adminMatch, "if (phone === ADMIN_PHONE)");
 
 const readHtmlLine = `let html = fs.readFileSync(${JSON.stringify(path.join(projectRoot, 'index.html'))}, 'utf8');`;
 if (source.includes(readHtmlLine)) {
@@ -30,12 +35,13 @@ if (source.includes(readHtmlLine)) {
 }
 
 const bodyInject = "html = html.replace('</body>', pwaScript + '</body>');";
-if (source.includes(bodyInject)) {
-  source = source.replace(
-    bodyInject,
-    "html = html.replace('</body>', pwaScript + '<script src=\"/login-runtime-fix.js?v=20260902-login-final-v3\"></script><script src=\"/final-font-runtime.js?v=20260902-font-final-v3\"></script></body>');"
-  );
+if (!source.includes(bodyInject)) {
+  throw new Error('VERCEL_BODY_INJECT_PATCH_NOT_FOUND');
 }
+source = source.replace(
+  bodyInject,
+  `html = html.replace('</body>', pwaScript + ${JSON.stringify(inlineRuntime)} + '</body>');`
+);
 
 const packageImports = [
   'express',
