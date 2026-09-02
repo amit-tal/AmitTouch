@@ -1,6 +1,7 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { pathToFileURL, fileURLToPath } from 'node:url';
+import { pathToFileURL } from 'node:url';
 
 const sourceUrl = new URL('./server-v2.js', import.meta.url);
 let source = fs.readFileSync(sourceUrl, 'utf8');
@@ -10,11 +11,23 @@ if (!source.includes(listenBlock)) {
 }
 source = source.replace(listenBlock, 'export default app;');
 
-// Keep the generated runtime beside package.json/node_modules so bare package
-// imports such as express, luxon and googleapis resolve correctly on Vercel.
-const baseDir = path.dirname(fileURLToPath(import.meta.url));
-const runtimePath = path.join(baseDir, '.vercel-server-runtime.mjs');
+const packageImports = [
+  'express',
+  'googleapis',
+  'luxon',
+  '@supabase/supabase-js',
+  'tsdav',
+  'node-ical'
+];
+for (const specifier of packageImports) {
+  const resolved = import.meta.resolve(specifier);
+  source = source.replaceAll(`from '${specifier}'`, `from '${resolved}'`);
+  source = source.replaceAll(`from \"${specifier}\"`, `from \"${resolved}\"`);
+}
+
+const runtimePath = path.join(os.tmpdir(), 'amit-touch-vercel-runtime.mjs');
 fs.writeFileSync(runtimePath, source, 'utf8');
 const runtime = await import(pathToFileURL(runtimePath).href + '?v=' + Date.now());
 
+if (!runtime.default) throw new Error('VERCEL_EXPRESS_EXPORT_MISSING');
 export default runtime.default;
