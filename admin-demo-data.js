@@ -16,28 +16,32 @@ const demo=[
 ];
 const demoPending=demo.filter(a=>a.status==='pending');
 window.__AMIT_ADMIN_DEMO_APPOINTMENTS__=demo;
+function demoResponse(extra={}){return new Response(JSON.stringify({appointments:demo,demo:true,...extra}),{status:200,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}})}
 window.fetch=async function(input,init){
  const url=typeof input==='string'?input:(input&&input.url)||'';
- const response=await originalFetch(input,init);
- if(!/\/api\/admin\/appointments(?:\?|$)/.test(url)||String((init&&init.method)||'GET').toUpperCase()!=='GET')return response;
+ const method=String((init&&init.method)||'GET').toUpperCase();
+ const isAdminAppointments=/\/api\/admin\/appointments(?:\?|$)/.test(url)&&method==='GET';
+ if(!isAdminAppointments)return originalFetch(input,init);
+ let timeoutId;
  try{
-  const clone=response.clone();
-  const data=await clone.json();
-  if(response.ok&&Array.isArray(data.appointments)){
-   const current=data.appointments;
-   const hasPending=current.some(a=>a&&a.status==='pending');
-   let appointments=current;
-   if(current.length===0){
-    appointments=demo;
-   }else if(!hasPending){
-    const ids=new Set(current.map(a=>String(a&&a.id||'')));
-    appointments=[...current,...demoPending.filter(a=>!ids.has(String(a.id)))];
+  const timeout=new Promise(resolve=>{timeoutId=setTimeout(()=>resolve(null),700)});
+  const response=await Promise.race([originalFetch(input,init).catch(()=>null),timeout]);
+  clearTimeout(timeoutId);
+  if(!response)return demoResponse({fallback:'timeout'});
+  try{
+   const data=await response.clone().json();
+   if(response.ok&&Array.isArray(data.appointments)){
+    const current=data.appointments;
+    if(current.length===0)return demoResponse({fallback:'empty'});
+    const hasPending=current.some(a=>a&&a.status==='pending');
+    if(!hasPending){
+     const ids=new Set(current.map(a=>String(a&&a.id||'')));
+     const appointments=[...current,...demoPending.filter(a=>!ids.has(String(a.id)))];
+     return new Response(JSON.stringify({...data,appointments,demo:true}),{status:200,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}})
+    }
    }
-   if(appointments!==current){
-    return new Response(JSON.stringify({...data,appointments,demo:true}),{status:200,headers:{'Content-Type':'application/json'}})
-   }
-  }
- }catch(_){ }
- return response;
+  }catch(_){ }
+  return response.ok?response:demoResponse({fallback:'http-'+response.status});
+ }catch(_){clearTimeout(timeoutId);return demoResponse({fallback:'error'})}
 };
 })();
