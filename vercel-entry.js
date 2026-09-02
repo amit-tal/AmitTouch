@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
@@ -11,7 +10,10 @@ if (!source.includes(listenBlock)) {
 }
 source = source.replace(listenBlock, 'export default app;');
 
-const runtimePath = path.join(os.tmpdir(), 'amit-touch-vercel-runtime.mjs');
+// Keep the generated runtime beside package.json/node_modules so bare package
+// imports such as express, luxon and googleapis resolve correctly on Vercel.
+const baseDir = path.dirname(fileURLToPath(import.meta.url));
+const runtimePath = path.join(baseDir, '.vercel-server-runtime.mjs');
 fs.writeFileSync(runtimePath, source, 'utf8');
 const runtime = await import(pathToFileURL(runtimePath).href + '?v=' + Date.now());
 
