@@ -5,6 +5,7 @@ document.getElementById(ID)?.remove();
 const style=document.createElement('style');
 style.id=ID;
 style.textContent=`
+:root{--hand:'GveretLevin',cursive}
 @font-face{font-family:'OpenSansHebrew';src:url('/assets/opensanshebrew-light-webfont.woff') format('woff');font-weight:300;font-style:normal;font-display:swap}
 @font-face{font-family:'OpenSansHebrew';src:url('/assets/opensanshebrew-regular-webfont.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'OpenSansHebrew';src:url('/assets/opensanshebrew-bold-webfont.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
@@ -23,6 +24,7 @@ html,body,button,input,textarea,select,
 #login h1,#login p.subtitle,#login .field,#login .field::placeholder,#login .primary,#login .divider,#login .secure,#login .auth-link,
 #register h1,#register p.subtitle,#register .field,#register .field::placeholder,#register .dob-copy span,#register .primary,#register .divider,#register .secure,#register .auth-link{font-weight:300!important}
 #login .auth-link button,#register .auth-link button,#register .field-label,#register .dob-copy b{font-weight:400!important}
+.hero-touch,.amit-boot-copy,.amit-handwriting,[data-handwriting='1']{font-family:var(--hand)!important;font-synthesis:none!important}
 .field-icon,.ico,.art,.spark,.checkdot,.round,.heart,.toggle,.af-icon,.af-nav i,[class*='icon'],[class*='Icon']{font-family:Arial,'Segoe UI Symbol','Apple Symbols',sans-serif!important}
 img,svg,path{font-family:initial!important}
 `;
