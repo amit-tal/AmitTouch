@@ -20,6 +20,13 @@ if (source.includes(adminMatch)) {
   source = source.replace(adminMatch, "if (phone === ADMIN_PHONE)");
 }
 
+// Load the final admin login gate after every other client script so the
+// legacy inline login handler cannot override the manager-code flow.
+const bodyInject = "html = html.replace('</body>', pwaScript + '</body>');";
+if (source.includes(bodyInject)) {
+  source = source.replace(bodyInject, "html = html.replace('</body>', pwaScript + '<script src=\"/final-admin-login-lock.js?v=20260902-admin-lock-v1\"></script></body>');");
+}
+
 const packageImports = [
   'express',
   'googleapis',
