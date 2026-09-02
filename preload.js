@@ -7,7 +7,7 @@ fs.readFileSync=function patchedReadFileSync(path,...args){
   if(!String(path||'').endsWith('index.html'))return result;
   const isBuffer=Buffer.isBuffer(result);
   let html=isBuffer?result.toString('utf8'):String(result);
-  const build='20260829-current-ui-boot-v1';
+  const build='20260902-test-font-refresh-v2';
   const logo=`/assets/amitouch_logo_vector.png?v=${build}`;
   const heart=`/assets/amit-touch-heart.svg?v=${build}`;
   const bg=`/assets/splash-bg.webp?v=${build}`;
