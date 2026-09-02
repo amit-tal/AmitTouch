@@ -12,6 +12,14 @@ if (!source.includes(listenBlock)) {
 }
 source = source.replace(listenBlock, 'export default app;');
 
+// In the preview environment, the manager account is identified by the
+// unique manager phone. This prevents that phone from ever falling through
+// to the regular-customer login path because of name formatting differences.
+const adminMatch = "if (fullName === ADMIN_NAME && phone === ADMIN_PHONE)";
+if (source.includes(adminMatch)) {
+  source = source.replace(adminMatch, "if (phone === ADMIN_PHONE)");
+}
+
 const packageImports = [
   'express',
   'googleapis',
