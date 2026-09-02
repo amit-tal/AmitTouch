@@ -25,6 +25,16 @@ if (source.includes(adminMatch)) {
   source = source.replace(adminMatch, "if (phone === ADMIN_PHONE)");
 }
 
+// Re-apply the canonical login handler and font runtime at the very end of
+// the served HTML, after the legacy shell and all preload injections.
+const bodyInject = "html = html.replace('</body>', pwaScript + '</body>');";
+if (source.includes(bodyInject)) {
+  source = source.replace(
+    bodyInject,
+    "html = html.replace('</body>', pwaScript + '<script src=\"/login-runtime-fix.js?v=20260902-login-final-v1\"></script><script src=\"/final-font-runtime.js?v=20260902-font-final-v1\"></script></body>');"
+  );
+}
+
 const packageImports = [
   'express',
   'googleapis',
