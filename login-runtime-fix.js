@@ -8,18 +8,25 @@ function cleanPhone(value){let phone=String(value||'').replace(/\D/g,'');if(phon
 function cleanName(value){return String(value||'').replace(/\s+/g,' ').trim()}
 function mapAppointment(row){const start=new Date(row.starts_at),extras=Array.isArray(row.extras)?row.extras:[];return{id:row.id,appointmentId:row.id,customerId:row.customer_id,service:row.service_name,price:Number(row.total_price||0),date:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jerusalem',year:'numeric',month:'2-digit',day:'2-digit'}).format(start),time:new Intl.DateTimeFormat('he-IL',{timeZone:'Asia/Jerusalem',hour:'2-digit',minute:'2-digit',hour12:false}).format(start),minutes:row.treatment_minutes,buffer:row.buffer_minutes,extra:extras.map(x=>x.name).filter(Boolean).join(', '),eventId:row.google_event_id,status:row.status}}
 function enterSafely(){if(typeof window.enterApp==='function')return window.enterApp();document.getElementById('nav')?.classList.add('show');if(typeof window.show==='function')return window.show('home');document.getElementById('login')?.classList.remove('active');document.getElementById('home')?.classList.add('active')}
-function ensureAdminCode(){let w=document.getElementById('adminCodeWrap');if(w){w.style.display='flex';const i=w.querySelector('#adminCode');setTimeout(()=>i?.focus(),0);return i}const phone=document.getElementById('loginPhone');const wrap=phone?.closest('.field-wrap');if(!wrap)return null;w=document.createElement('div');w.id='adminCodeWrap';w.className='glass field-wrap';w.style.display='flex';w.innerHTML='<span class="field-icon">✦</span><input id="adminCode" class="field" inputmode="numeric" autocomplete="one-time-code" maxlength="4" placeholder="קוד מנהל">';wrap.insertAdjacentElement('afterend',w);const i=w.querySelector('#adminCode');setTimeout(()=>i?.focus(),0);return i}
+function ensureAdminCode(){let w=document.getElementById('adminCodeWrap');if(w){w.style.display='flex';const i=w.querySelector('#adminCode');setTimeout(()=>i?.focus(),0);return i}const phone=document.getElementById('loginPhone');const wrap=phone?.closest('.field-wrap');if(!wrap)return null;w=document.createElement('div');w.id='adminCodeWrap';w.className='glass field-wrap';w.style.display='flex';w.innerHTML='<span class="field-icon"></span><input id="adminCode" class="field" inputmode="numeric" autocomplete="one-time-code" maxlength="4" placeholder="קוד מנהל">';wrap.insertAdjacentElement('afterend',w);const i=w.querySelector('#adminCode');setTimeout(()=>i?.focus(),0);return i}
+function hideLegacyForAdmin(){
+ document.body.classList.add('admin-session-active','admin-v2');
+ const app=document.querySelector('main.app');
+ if(app){app.setAttribute('aria-hidden','true');app.style.setProperty('display','none','important');app.style.setProperty('visibility','hidden','important');app.style.setProperty('pointer-events','none','important')}
+ document.querySelectorAll('#nav,.nav,#amitBottomNav').forEach(n=>{n.hidden=true;n.style.setProperty('display','none','important');n.style.setProperty('visibility','hidden','important');n.style.setProperty('pointer-events','none','important')});
+ let root=document.getElementById('amitAdminRoot');
+ if(!root){root=document.createElement('div');root.id='amitAdminRoot';document.body.appendChild(root)}
+ root.hidden=false;root.style.setProperty('display','block','important');root.style.setProperty('visibility','visible','important');root.style.setProperty('position','fixed','important');root.style.setProperty('inset','0','important');root.style.setProperty('z-index','2147483000','important');root.style.setProperty('background','#fbf7f2','important');
+}
 function enterAdmin(){
  try{localStorage.removeItem('amitUser');localStorage.removeItem('amit-touch-signed-in-customer-v5');sessionStorage.removeItem('amit-touch-signed-in-customer-v5');localStorage.setItem('amit-touch-admin-session-v1','1');sessionStorage.setItem('amit-touch-admin-session-v1','1')}catch(_){}
  window.__AMIT_ADMIN_SESSION__=true;
  window.user={name:'עמית טל',phone:ADMIN_PHONE,admin:true};
+ hideLegacyForAdmin();
  if(typeof window.AMIT_TOUCH_ENTER_ADMIN==='function'){window.AMIT_TOUCH_ENTER_ADMIN();return}
- document.body.classList.add('admin-session-active','admin-v2');
- document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
- document.getElementById('admin')?.classList.add('active');
- document.querySelectorAll('#nav,.nav').forEach(n=>{n.classList.remove('show');n.style.display='none'});
  if(typeof window.renderAdminV2==='function')Promise.resolve(window.renderAdminV2()).catch(console.error);
  else if(typeof window.renderAdmin==='function')Promise.resolve(window.renderAdmin()).catch(console.error);
+ let tries=0;const wait=setInterval(()=>{if(typeof window.AMIT_TOUCH_ENTER_ADMIN==='function'){clearInterval(wait);window.AMIT_TOUCH_ENTER_ADMIN()}else if(++tries>120)clearInterval(wait)},50);
 }
 async function doLogin(){
  const nameEl=document.getElementById('loginName'),phoneEl=document.getElementById('loginPhone');
