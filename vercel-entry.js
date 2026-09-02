@@ -25,13 +25,22 @@ if (source.includes(adminMatch)) {
   source = source.replace(adminMatch, "if (phone === ADMIN_PHONE)");
 }
 
-// Re-apply the canonical login handler and font runtime at the very end of
-// the served HTML, after the legacy shell and all preload injections.
+// The preload HTML currently contains an earlier login-runtime loader. Strip
+// that one from the served HTML so only the final handler below owns login.
+const readHtmlLine = `let html = fs.readFileSync(${JSON.stringify(path.join(projectRoot, 'index.html'))}, 'utf8');`;
+if (source.includes(readHtmlLine)) {
+  source = source.replace(
+    readHtmlLine,
+    readHtmlLine + `\n    html = html.replace("['/login-runtime-fix.js','loginfix'],", '');`
+  );
+}
+
+// Load exactly one canonical login handler at the very end of the page.
 const bodyInject = "html = html.replace('</body>', pwaScript + '</body>');";
 if (source.includes(bodyInject)) {
   source = source.replace(
     bodyInject,
-    "html = html.replace('</body>', pwaScript + '<script src=\"/login-runtime-fix.js?v=20260902-login-final-v1\"></script><script src=\"/final-font-runtime.js?v=20260902-font-final-v1\"></script></body>');"
+    "html = html.replace('</body>', pwaScript + '<script src=\"/login-runtime-fix.js?v=20260902-login-final-v2\"></script><script src=\"/final-font-runtime.js?v=20260902-font-final-v2\"></script></body>');"
   );
 }
 
