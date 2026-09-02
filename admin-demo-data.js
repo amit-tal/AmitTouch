@@ -14,6 +14,7 @@ const demo=[
 {id:'demo-week-1',starts_at:isoAt(3,10,30),status:'confirmed',service_name:'מילוי',total_price:180,treatment_minutes:90,notes:'',customer:{id:'demo-c-rina',first_name:'רינה',last_name:'לב',fullName:'רינה לב',phone:'0543344556'}},
 {id:'demo-week-2',starts_at:isoAt(4,16,0),status:'confirmed',service_name:'מניקור ג׳ל',total_price:150,treatment_minutes:60,notes:'',customer:{id:'demo-c-gal',first_name:'גל',last_name:'חן',fullName:'גל חן',phone:'0521122334'}}
 ];
+const demoPending=demo.filter(a=>a.status==='pending');
 window.__AMIT_ADMIN_DEMO_APPOINTMENTS__=demo;
 window.fetch=async function(input,init){
  const url=typeof input==='string'?input:(input&&input.url)||'';
@@ -22,8 +23,19 @@ window.fetch=async function(input,init){
  try{
   const clone=response.clone();
   const data=await clone.json();
-  if(response.ok&&Array.isArray(data.appointments)&&data.appointments.length===0){
-   return new Response(JSON.stringify({...data,appointments:demo,demo:true}),{status:200,headers:{'Content-Type':'application/json'}})
+  if(response.ok&&Array.isArray(data.appointments)){
+   const current=data.appointments;
+   const hasPending=current.some(a=>a&&a.status==='pending');
+   let appointments=current;
+   if(current.length===0){
+    appointments=demo;
+   }else if(!hasPending){
+    const ids=new Set(current.map(a=>String(a&&a.id||'')));
+    appointments=[...current,...demoPending.filter(a=>!ids.has(String(a.id)))];
+   }
+   if(appointments!==current){
+    return new Response(JSON.stringify({...data,appointments,demo:true}),{status:200,headers:{'Content-Type':'application/json'}})
+   }
   }
  }catch(_){ }
  return response;
