@@ -1,7 +1,10 @@
 (function(){
 'use strict';
 const ID='amit-final-open-sans-runtime';
-const CSS=`
+document.getElementById(ID)?.remove();
+const style=document.createElement('style');
+style.id=ID;
+style.textContent=`
 @font-face{font-family:'OpenSansHebrew';src:url('/assets/opensanshebrew-light-webfont.woff') format('woff');font-weight:300;font-style:normal;font-display:swap}
 @font-face{font-family:'OpenSansHebrew';src:url('/assets/opensanshebrew-regular-webfont.woff') format('woff');font-weight:400 500;font-style:normal;font-display:swap}
 @font-face{font-family:'OpenSansHebrew';src:url('/assets/opensanshebrew-bold-webfont.woff') format('woff');font-weight:600 700;font-style:normal;font-display:swap}
@@ -16,14 +19,5 @@ html,body,button,input,textarea,select,
 .field-icon,.ico,.art,.spark,.checkdot,.round,.heart,.toggle,.af-icon,.af-nav i,[class*='icon'],[class*='Icon']{font-family:Arial,'Segoe UI Symbol','Apple Symbols',sans-serif!important}
 img,svg,path{font-family:initial!important}
 `;
-function apply(){
- let style=document.getElementById(ID);
- if(!style){style=document.createElement('style');style.id=ID;style.textContent=CSS}
- if(style.parentNode)style.parentNode.removeChild(style);
- document.head.appendChild(style);
-}
-apply();
-let runs=0;
-const timer=setInterval(()=>{apply();if(++runs>=20)clearInterval(timer)},400);
-new MutationObserver(()=>apply()).observe(document.documentElement,{childList:true,subtree:true});
+document.head.appendChild(style);
 })();
