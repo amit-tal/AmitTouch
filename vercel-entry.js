@@ -13,20 +13,14 @@ if (!source.includes(listenBlock)) {
 }
 source = source.replace(listenBlock, 'export default app;');
 
-// Always resolve the app shell and static assets from the packaged project
-// directory inside the Vercel serverless function.
 source = source.replace("fs.readFileSync('./index.html', 'utf8')", `fs.readFileSync(${JSON.stringify(path.join(projectRoot, 'index.html'))}, 'utf8')`);
 source = source.replace("app.use(express.static('.'));", `app.use(express.static(${JSON.stringify(projectRoot)}));`);
 
-// The manager account is uniquely identified by its phone in preview, so it
-// can never fall through to the regular customer login path.
 const adminMatch = "if (fullName === ADMIN_NAME && phone === ADMIN_PHONE)";
 if (source.includes(adminMatch)) {
   source = source.replace(adminMatch, "if (phone === ADMIN_PHONE)");
 }
 
-// The preload HTML currently contains an earlier login-runtime loader. Strip
-// that one from the served HTML so only the final handler below owns login.
 const readHtmlLine = `let html = fs.readFileSync(${JSON.stringify(path.join(projectRoot, 'index.html'))}, 'utf8');`;
 if (source.includes(readHtmlLine)) {
   source = source.replace(
@@ -35,12 +29,11 @@ if (source.includes(readHtmlLine)) {
   );
 }
 
-// Load exactly one canonical login handler at the very end of the page.
 const bodyInject = "html = html.replace('</body>', pwaScript + '</body>');";
 if (source.includes(bodyInject)) {
   source = source.replace(
     bodyInject,
-    "html = html.replace('</body>', pwaScript + '<script src=\"/login-runtime-fix.js?v=20260902-login-final-v2\"></script><script src=\"/final-font-runtime.js?v=20260902-font-final-v2\"></script></body>');"
+    "html = html.replace('</body>', pwaScript + '<script src=\"/login-runtime-fix.js?v=20260902-login-final-v3\"></script><script src=\"/final-font-runtime.js?v=20260902-font-final-v3\"></script></body>');"
   );
 }
 
